@@ -1,18 +1,17 @@
 /**
- * Double Deezz The Food Cafe - Firebase Architecture & Service Layer
- * Supports Firebase v9/v10 Compat & Fallback Sync Engine
+ * Double Deezz The Food Cafe - Complete Firebase Service Layer
+ * Supports Firebase Authentication, Cloud Firestore (Real-time), and Firebase Storage.
  */
 
 (function (window) {
   'use strict';
 
-  // Default configuration storage key
-  const STORAGE_KEY = 'doubledeezz_firebase_config';
-  const SETTINGS_KEY = 'doubledeezz_settings';
-  const MENU_CACHE_KEY = 'doubledeezz_menu_cache';
-
-  // Default initial configuration structure
-  const DEFAULT_CONFIG = {
+  // =========================================================================
+  // 1. EMBEDDED FIREBASE CONFIGURATION
+  // You can paste your Firebase Web App credentials directly here,
+  // OR configure them through the Admin Portal (/admin -> Restaurant Settings).
+  // =========================================================================
+  const EMBEDDED_FIREBASE_CONFIG = {
     apiKey: "",
     authDomain: "",
     projectId: "",
@@ -21,49 +20,59 @@
     appId: ""
   };
 
+  const STORAGE_KEY = 'doubledeezz_firebase_config';
+  const SETTINGS_KEY = 'doubledeezz_settings';
+  const MENU_CACHE_KEY = 'doubledeezz_menu_cache';
+
   let appInstance = null;
   let authInstance = null;
   let firestoreInstance = null;
   let storageInstance = null;
+
   let activeMenuUnsubscribe = null;
   let activeSettingsUnsubscribe = null;
   let activeOrdersUnsubscribe = null;
 
-  function getStoredConfig() {
+  // Retrieve effective configuration (Priority: localStorage > window.__FIREBASE_CONFIG__ > EMBEDDED)
+  function getEffectiveConfig() {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        if (parsed.projectId && parsed.apiKey) {
-          return parsed;
-        }
+        if (parsed.projectId && parsed.apiKey) return parsed;
       }
     } catch (e) {}
+
     if (window.__FIREBASE_CONFIG__ && window.__FIREBASE_CONFIG__.projectId) {
       return window.__FIREBASE_CONFIG__;
     }
+
+    if (EMBEDDED_FIREBASE_CONFIG.projectId && EMBEDDED_FIREBASE_CONFIG.apiKey) {
+      return EMBEDDED_FIREBASE_CONFIG;
+    }
+
     return null;
   }
 
   function isFirebaseConfigured() {
-    const cfg = getStoredConfig();
+    const cfg = getEffectiveConfig();
     return !!(cfg && cfg.projectId && cfg.apiKey && cfg.apiKey.length > 5);
   }
 
   function initFirebase(customConfig = null) {
-    const config = customConfig || getStoredConfig();
+    const config = customConfig || getEffectiveConfig();
     if (!config || !config.apiKey || !config.projectId) {
-      console.log('ℹ️ Firebase credentials not configured. Running in high-performance local/server mode.');
+      console.log('ℹ️ Firebase credentials not provided yet. System running in high-performance local/server mode.');
       return false;
     }
 
     try {
       if (typeof firebase === 'undefined') {
-        console.warn('Firebase SDK not yet loaded in DOM.');
+        console.warn('Firebase SDK script not loaded in page.');
         return false;
       }
 
-      // Check if already initialized
+      // Initialize App if not already initialized
       if (!firebase.apps || !firebase.apps.length) {
         appInstance = firebase.initializeApp(config);
       } else {
@@ -72,13 +81,14 @@
 
       authInstance = firebase.auth();
       firestoreInstance = firebase.firestore();
+
       try {
         storageInstance = firebase.storage();
       } catch (e) {
-        console.log('Firebase storage optional module status:', e.message);
+        console.log('Firebase Storage optional module status:', e.message);
       }
 
-      console.log('✅ Firebase initialized successfully with Project:', config.projectId);
+      console.log('🔥 Firebase initialized successfully! Project:', config.projectId);
       return true;
     } catch (err) {
       console.error('Firebase initialization error:', err);
@@ -86,7 +96,38 @@
     }
   }
 
-  // --- Real-time Listeners and Cloud Sync ---
+  // =========================================================================
+  // 2. FIREBASE AUTHENTICATION (ADMIN ACCESS)
+  // =========================================================================
+
+  function signInWithEmail(email, password) {
+    if (!authInstance) return Promise.reject(new Error('Firebase Auth not initialized'));
+    return authInstance.signInWithEmailAndPassword(email, password);
+  }
+
+  function registerAdminAccount(email, password) {
+    if (!authInstance) return Promise.reject(new Error('Firebase Auth not initialized'));
+    return authInstance.createUserWithEmailAndPassword(email, password);
+  }
+
+  function signOutAdmin() {
+    if (!authInstance) return Promise.resolve();
+    return authInstance.signOut();
+  }
+
+  function onAuthStateChanged(callback) {
+    if (authInstance) {
+      return authInstance.onAuthStateChanged(callback);
+    }
+    // Fallback: check session storage
+    const localAdmin = sessionStorage.getItem('doubledeezz_admin_auth') === 'true';
+    callback(localAdmin ? { email: 'admin@doubledeezz.local', uid: 'local_admin' } : null);
+    return () => {};
+  }
+
+  // =========================================================================
+  // 3. REAL-TIME MENU, SETTINGS & ORDER LISTENERS
+  // =========================================================================
 
   function subscribeToMenu(onUpdate, onError) {
     if (activeMenuUnsubscribe) {
@@ -96,7 +137,7 @@
 
     if (isFirebaseConfigured() && firestoreInstance) {
       try {
-        // Primary Firestore doc: 'restaurant/menu'
+        // Primary Firestore document: 'restaurant/menu'
         activeMenuUnsubscribe = firestoreInstance.collection('restaurant').doc('menu')
           .onSnapshot((doc) => {
             if (doc.exists) {
@@ -107,10 +148,9 @@
                 return;
               }
             }
-            // If document doesn't exist yet, fallback to local/server
             loadFallbackMenu(onUpdate);
           }, (err) => {
-            console.warn('Firestore menu listener warning:', err);
+            console.warn('Firestore live listener warning, loading fallback:', err);
             loadFallbackMenu(onUpdate);
             if (onError) onError(err);
           });
@@ -135,7 +175,7 @@
       } catch (e) {}
     }
 
-    // Fetch from /api/menu or menu.json
+    // Fetch from server / local menu.json
     fetch('./menu.json?t=' + Date.now())
       .then(res => res.json())
       .then(data => {
@@ -229,11 +269,14 @@
       .catch(() => callback([]));
   }
 
-  // --- Push / Save methods ---
+  // =========================================================================
+  // 4. CLOUD SAVE & FIRESTORE DATABASE SEEDING
+  // =========================================================================
 
   async function saveMenuToCloud(menuData) {
     let cloudSaved = false;
-    // 1. Firebase Firestore save
+
+    // 1. Firebase Firestore write
     if (isFirebaseConfigured() && firestoreInstance) {
       try {
         await firestoreInstance.collection('restaurant').doc('menu').set(menuData, { merge: true });
@@ -243,7 +286,7 @@
       }
     }
 
-    // 2. Local API save
+    // 2. Local API write
     try {
       const res = await fetch('./api/menu', {
         method: 'POST',
@@ -268,17 +311,17 @@
       status: order.status || 'Pending'
     };
 
-    // 1. Firestore save
+    // 1. Firestore collection write
     if (isFirebaseConfigured() && firestoreInstance) {
       try {
         await firestoreInstance.collection('orders').doc(orderId).set(cleanOrder);
         orderSaved = true;
       } catch (e) {
-        console.error('Firestore order save error:', e);
+        console.error('Firestore order write error:', e);
       }
     }
 
-    // 2. Local API save
+    // 2. Local API write
     try {
       const res = await fetch('./api/orders', {
         method: 'POST',
@@ -293,9 +336,13 @@
 
   async function updateOrderStatus(orderId, status) {
     let updated = false;
+
     if (isFirebaseConfigured() && firestoreInstance) {
       try {
-        await firestoreInstance.collection('orders').doc(orderId).update({ status, updatedAt: new Date().toISOString() });
+        await firestoreInstance.collection('orders').doc(orderId).update({
+          status,
+          updatedAt: new Date().toISOString()
+        });
         updated = true;
       } catch (e) {}
     }
@@ -314,6 +361,7 @@
 
   async function saveSettings(settings) {
     let saved = false;
+
     if (isFirebaseConfigured() && firestoreInstance) {
       try {
         await firestoreInstance.collection('restaurant').doc('settings').set(settings, { merge: true });
@@ -334,22 +382,55 @@
     return saved;
   }
 
+  // Seed Firestore with Complete Granular Structure:
+  // 1. restaurant/menu
+  // 2. restaurant/settings
+  // 3. categories/{catId}
+  // 4. menu_items/{itemId}
   async function seedFirestore(menuData) {
-    if (!firestoreInstance) throw new Error('Firebase Firestore not initialized.');
-    // Seed menu
+    if (!firestoreInstance) throw new Error('Firebase Firestore not initialized. Please configure credentials first.');
+
+    // 1. Seed Main Menu document
     await firestoreInstance.collection('restaurant').doc('menu').set(menuData);
-    // Seed settings
+
+    // 2. Seed Settings document
     if (menuData._settings) {
       await firestoreInstance.collection('restaurant').doc('settings').set(menuData._settings);
     }
+
+    // 3. Seed granular Categories collection
+    const batch = firestoreInstance.batch();
+    const categories = menuData._categories || [];
+    categories.forEach(cat => {
+      const catRef = firestoreInstance.collection('categories').doc(cat.id);
+      batch.set(catRef, cat);
+    });
+
+    // 4. Seed granular Menu Items collection
+    categories.forEach(cat => {
+      const items = menuData[cat.id] || [];
+      items.forEach(item => {
+        const itemKey = item.id || (cat.id + '_' + item.name.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase());
+        const itemRef = firestoreInstance.collection('menu_items').doc(itemKey);
+        batch.set(itemRef, {
+          ...item,
+          category: cat.id,
+          categoryName: cat.name,
+          updatedAt: new Date().toISOString()
+        });
+      });
+    });
+
+    await batch.commit();
+    console.log('✅ Cloud Firestore successfully seeded with all categories and menu items!');
     return true;
   }
 
-  // Export API to global window object
+  // Export to Global Window Object
   window.DoubleDeezzFirebase = {
     init: initFirebase,
     isConfigured: isFirebaseConfigured,
-    getConfig: getStoredConfig,
+    getConfig: getEffectiveConfig,
     setConfig: function (config) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
       return initFirebase(config);
@@ -360,6 +441,10 @@
     getAuth: function () { return authInstance; },
     getFirestore: function () { return firestoreInstance; },
     getStorage: function () { return storageInstance; },
+    signInWithEmail,
+    registerAdminAccount,
+    signOutAdmin,
+    onAuthStateChanged,
     subscribeToMenu,
     subscribeToSettings,
     subscribeToOrders,
@@ -370,7 +455,7 @@
     seedFirestore
   };
 
-  // Auto-init on load if config exists
+  // Auto-init on load
   window.addEventListener('DOMContentLoaded', () => {
     initFirebase();
   });

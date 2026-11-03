@@ -1,0 +1,40 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper: Check if user is authenticated administrator
+    function isAdmin() {
+      return request.auth != null;
+    }
+
+    // Restaurant Menu & Settings:
+    // Anyone (customers scanning QR code) can read menu and settings.
+    // Only authenticated administrators can create, update, or delete menu items and prices.
+    match /restaurant/{document} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Menu Items Collection (Granular collection structure):
+    match /menu_items/{itemId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Categories Collection:
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Customer Orders:
+    // Customers can submit (create) new orders.
+    // Only authenticated administrators can read all orders and update order status.
+    match /orders/{orderId} {
+      allow create: if request.resource.data.grandTotal is number
+                    && request.resource.data.items is list
+                    && request.resource.data.customer is map;
+      allow read, update, delete: if isAdmin();
+    }
+  }
+}

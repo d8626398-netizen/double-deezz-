@@ -1,0 +1,1347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <meta name="theme-color" content="#861B40">
+  <title>Admin Portal | Double Deezz The Food Cafe</title>
+
+  <!-- Google Fonts & Material Symbols -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600..800;1,600..800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            burgundy: {
+              DEFAULT: '#861B40',
+              dark: '#65122F',
+              light: '#A02752',
+              soft: '#F6EBF0'
+            },
+            green: {
+              fresh: '#26966F',
+              dark: '#1C7456',
+              light: '#32B386',
+              soft: '#EAF7F2'
+            },
+            cream: {
+              DEFAULT: '#FFF8E9',
+              dark: '#F5ECD5',
+              card: '#FCF5E5'
+            },
+            dark: {
+              DEFAULT: '#242424',
+              muted: '#686868',
+              border: '#E8DFD5'
+            }
+          },
+          fontFamily: {
+            body: ['"Plus Jakarta Sans"', 'sans-serif'],
+            title: ['"Playfair Display"', 'serif']
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      background-color: #F8F5F0;
+      color: #242424;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .veg-symbol {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 14px;
+      height: 14px;
+      border: 1.5px solid #26966F;
+      border-radius: 3px;
+      background: #FFFFFF;
+      padding: 1px;
+    }
+    .veg-symbol::after {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #26966F;
+    }
+    .non-veg-symbol {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 14px;
+      height: 14px;
+      border: 1.5px solid #861B40;
+      border-radius: 3px;
+      background: #FFFFFF;
+      padding: 1px;
+    }
+    .non-veg-symbol::after {
+      content: '';
+      width: 0;
+      height: 0;
+      border-left: 3.5px solid transparent;
+      border-right: 3.5px solid transparent;
+      border-bottom: 6px solid #861B40;
+    }
+    .tab-active {
+      background-color: #861B40 !important;
+      color: #FFFFFF !important;
+    }
+    .modal-backdrop {
+      background: rgba(36, 36, 36, 0.7);
+      backdrop-filter: blur(4px);
+    }
+  </style>
+
+  <!-- Firebase Compat SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+  <script src="./firebase-config.js"></script>
+</head>
+<body class="min-h-screen flex flex-col antialiased">
+
+  <!-- ADMIN AUTH GUARD MODAL (Shown if not logged in) -->
+  <div id="loginModal" class="fixed inset-0 z-50 flex items-center justify-center modal-backdrop p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-dark-border text-center">
+      <div class="w-14 h-14 mx-auto rounded-full bg-burgundy/10 text-burgundy flex items-center justify-center mb-3">
+        <span class="material-symbols-outlined text-3xl">shield_person</span>
+      </div>
+      <h2 class="font-title font-bold text-xl text-burgundy">Double Deezz Admin</h2>
+      <p class="text-xs text-dark-muted mt-1 mb-5">Enter security passcode to manage restaurant menu, prices &amp; orders.</p>
+      
+      <form onsubmit="handleAdminLogin(event)" class="space-y-3">
+        <div>
+          <input id="adminPinInput" type="password" placeholder="Passcode (Default: 1818)" class="w-full text-center text-lg tracking-widest p-2.5 rounded-xl border border-dark-border focus:ring-2 focus:ring-burgundy focus:outline-none" required>
+        </div>
+        <button type="submit" class="w-full py-2.5 rounded-xl bg-burgundy hover:bg-burgundy-light text-white font-bold text-sm shadow transition-all active:scale-95">
+          Access Admin Dashboard
+        </button>
+      </form>
+      <div class="mt-4 pt-3 border-t border-dark-border text-[11px] text-dark-muted">
+        <a href="./" class="text-burgundy hover:underline flex items-center justify-center gap-1">
+          <span class="material-symbols-outlined text-[14px]">arrow_back</span>
+          <span>Back to Customer Menu</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN ADMIN APP WRAPPER -->
+  <div id="adminApp" class="hidden flex-1 flex flex-col">
+    
+    <!-- TOP NAVBAR -->
+    <header class="bg-burgundy text-white shadow-md sticky top-0 z-40">
+      <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+        
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-full overflow-hidden border border-white/50 bg-cream shrink-0">
+            <img src="./logo.jpg" alt="Logo" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=120&q=80'">
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="font-title font-bold text-base md:text-lg text-cream leading-tight">DOUBLE DEEZZ ADMIN</h1>
+              <span id="firebaseStatusBadge" class="text-[10px] bg-white/20 text-cream px-2 py-0.5 rounded-full font-medium">Checking Firebase...</span>
+            </div>
+            <p class="text-[10px] text-cream/70 font-medium">Live Ordering &amp; Menu Management Portal</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <!-- View Live Website -->
+          <a href="./" target="_blank" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-semibold text-cream transition-all">
+            <span class="material-symbols-outlined text-[16px]">visibility</span>
+            <span>View Customer Site</span>
+          </a>
+
+          <!-- Logout Button -->
+          <button onclick="handleAdminLogout()" class="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-red-600 text-xs font-semibold text-cream transition-all">
+            <span class="material-symbols-outlined text-[16px]">logout</span>
+            <span class="hidden sm:inline">Lock</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- TABS BAR -->
+      <div class="bg-burgundy-dark px-4 border-t border-white/10">
+        <div class="max-w-7xl mx-auto flex items-center gap-1 overflow-x-auto scrollbar-none py-1.5 text-xs font-semibold">
+          <button onclick="switchTab('dashboard')" id="tabBtn_dashboard" class="tab-btn px-4 py-2 rounded-lg transition-all tab-active flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-[16px]">dashboard</span>
+            <span>Dashboard</span>
+          </button>
+          <button onclick="switchTab('menu')" id="tabBtn_menu" class="tab-btn px-4 py-2 rounded-lg text-cream/80 hover:text-white transition-all flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-[16px]">restaurant_menu</span>
+            <span>Menu Items</span>
+          </button>
+          <button onclick="switchTab('prices')" id="tabBtn_prices" class="tab-btn px-4 py-2 rounded-lg text-cream/80 hover:text-white transition-all flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-[16px]">payments</span>
+            <span>Price Management</span>
+          </button>
+          <button onclick="switchTab('orders')" id="tabBtn_orders" class="tab-btn px-4 py-2 rounded-lg text-cream/80 hover:text-white transition-all flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-[16px]">receipt_long</span>
+            <span>Live Orders</span>
+            <span id="orderCountBadge" class="bg-green-fresh text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold ml-1 hidden">0</span>
+          </button>
+          <button onclick="switchTab('settings')" id="tabBtn_settings" class="tab-btn px-4 py-2 rounded-lg text-cream/80 hover:text-white transition-all flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-[16px]">tune</span>
+            <span>Restaurant Settings</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- CONTENT BODY -->
+    <main class="max-w-7xl mx-auto w-full p-4 sm:p-6 flex-1">
+      
+      <!-- 1. DASHBOARD TAB -->
+      <section id="tabContent_dashboard" class="space-y-6">
+        
+        <!-- Metrics Cards -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div class="bg-white p-4 rounded-2xl border border-dark-border shadow-xs">
+            <div class="flex items-center justify-between text-dark-muted mb-2">
+              <span class="text-xs font-semibold uppercase tracking-wider">Total Dishes</span>
+              <span class="material-symbols-outlined text-burgundy">lunch_dining</span>
+            </div>
+            <div class="text-2xl font-bold font-title text-burgundy" id="statTotalItems">0</div>
+            <div class="text-[11px] text-dark-muted mt-1">Across all categories</div>
+          </div>
+
+          <div class="bg-white p-4 rounded-2xl border border-dark-border shadow-xs">
+            <div class="flex items-center justify-between text-dark-muted mb-2">
+              <span class="text-xs font-semibold uppercase tracking-wider">Categories</span>
+              <span class="material-symbols-outlined text-green-fresh">category</span>
+            </div>
+            <div class="text-2xl font-bold font-title text-green-fresh" id="statTotalCategories">0</div>
+            <div class="text-[11px] text-dark-muted mt-1">Organized sections</div>
+          </div>
+
+          <div class="bg-white p-4 rounded-2xl border border-dark-border shadow-xs">
+            <div class="flex items-center justify-between text-dark-muted mb-2">
+              <span class="text-xs font-semibold uppercase tracking-wider">Available</span>
+              <span class="material-symbols-outlined text-green-fresh">check_circle</span>
+            </div>
+            <div class="text-2xl font-bold font-title text-dark" id="statAvailable">0</div>
+            <div class="text-[11px] text-green-dark mt-1">Ready to order</div>
+          </div>
+
+          <div class="bg-white p-4 rounded-2xl border border-dark-border shadow-xs">
+            <div class="flex items-center justify-between text-dark-muted mb-2">
+              <span class="text-xs font-semibold uppercase tracking-wider">Out of Stock</span>
+              <span class="material-symbols-outlined text-red-600">block</span>
+            </div>
+            <div class="text-2xl font-bold font-title text-red-600" id="statOutOfStock">0</div>
+            <div class="text-[11px] text-red-600 mt-1">Currently sold out</div>
+          </div>
+        </div>
+
+        <!-- Quick Actions & Recent Orders Preview -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          <!-- Quick Action Buttons -->
+          <div class="bg-white p-5 rounded-2xl border border-dark-border shadow-xs space-y-4">
+            <h3 class="font-title font-bold text-base text-dark">Quick Management</h3>
+            
+            <button onclick="openAddItemModal()" class="w-full py-2.5 px-4 rounded-xl bg-burgundy hover:bg-burgundy-light text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-all">
+              <span class="material-symbols-outlined text-[18px]">add_circle</span>
+              <span>Add New Dish to Menu</span>
+            </button>
+
+            <button onclick="switchTab('prices')" class="w-full py-2.5 px-4 rounded-xl bg-cream border border-dark-border hover:bg-cream-dark text-dark font-bold text-xs flex items-center justify-center gap-2 transition-all">
+              <span class="material-symbols-outlined text-[18px] text-burgundy">price_change</span>
+              <span>Bulk Edit Pizza &amp; Item Prices</span>
+            </button>
+
+            <button onclick="switchTab('settings')" class="w-full py-2.5 px-4 rounded-xl bg-cream border border-dark-border hover:bg-cream-dark text-dark font-bold text-xs flex items-center justify-center gap-2 transition-all">
+              <span class="material-symbols-outlined text-[18px] text-green-fresh">settings_phone</span>
+              <span>Update WhatsApp &amp; Delivery Policy</span>
+            </button>
+
+            <div class="p-3 bg-cream-card rounded-xl border border-dark-border text-xs text-dark-muted space-y-1">
+              <div class="font-bold text-dark">💡 Tip for Owners:</div>
+              <p>Whenever you edit a price or mark an item out-of-stock, it syncs directly to customers scanning the QR code in real-time.</p>
+            </div>
+          </div>
+
+          <!-- Recent Incoming Orders -->
+          <div class="lg:col-span-2 bg-white p-5 rounded-2xl border border-dark-border shadow-xs space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="font-title font-bold text-base text-dark">Recent Incoming Orders</h3>
+              <button onclick="switchTab('orders')" class="text-xs text-burgundy font-bold hover:underline">View All Orders &rarr;</button>
+            </div>
+            
+            <div id="dashboardRecentOrders" class="divide-y divide-dark-border/60">
+              <p class="py-6 text-center text-xs text-dark-muted">No orders recorded yet.</p>
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- 2. MENU MANAGEMENT TAB -->
+      <section id="tabContent_menu" class="hidden space-y-5">
+        
+        <!-- Controls: Category Filter, Search & Add Dish -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-dark-border shadow-xs">
+          
+          <div class="flex flex-wrap items-center gap-2 flex-1">
+            <select id="adminCategoryFilter" onchange="renderAdminMenuList()" class="p-2 rounded-xl border border-dark-border text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-burgundy">
+              <!-- Dynamically populated -->
+            </select>
+
+            <input id="adminMenuSearch" type="text" placeholder="Search dishes..." oninput="renderAdminMenuList()" class="p-2 rounded-xl border border-dark-border text-xs focus:outline-none focus:ring-1 focus:ring-burgundy flex-1 min-w-[150px]">
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button onclick="openAddItemModal()" class="px-4 py-2 rounded-xl bg-burgundy hover:bg-burgundy-light text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition-all">
+              <span class="material-symbols-outlined text-[16px]">add</span>
+              <span>Add Dish</span>
+            </button>
+            <button onclick="openCategoryManagerModal()" class="px-3 py-2 rounded-xl bg-cream border border-dark-border hover:bg-cream-dark text-dark font-bold text-xs flex items-center gap-1.5 transition-all">
+              <span class="material-symbols-outlined text-[16px]">folder</span>
+              <span>Categories</span>
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Dishes Table / Cards -->
+        <div class="bg-white rounded-2xl border border-dark-border shadow-xs overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-cream-dark/60 text-dark font-bold uppercase tracking-wider border-b border-dark-border">
+                <tr>
+                  <th class="p-3.5">Dish Details</th>
+                  <th class="p-3.5">Category</th>
+                  <th class="p-3.5">Pricing</th>
+                  <th class="p-3.5">Availability</th>
+                  <th class="p-3.5 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="adminMenuTableBody" class="divide-y divide-dark-border/60">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- 3. PRICE MANAGEMENT TAB -->
+      <section id="tabContent_prices" class="hidden space-y-5">
+        
+        <div class="bg-white p-4 rounded-2xl border border-dark-border shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div>
+            <h3 class="font-title font-bold text-base text-dark">Fast Bulk Price Editor</h3>
+            <p class="text-xs text-dark-muted">Quickly modify prices for regular items and pizzas (Small, Medium, Large). Click Save Changes to commit immediately to all customer phones.</p>
+          </div>
+
+          <button onclick="saveAllBulkPrices()" class="px-5 py-2.5 rounded-xl bg-green-fresh hover:bg-green-dark text-white font-bold text-xs flex items-center gap-1.5 shadow-md transition-all active:scale-95 shrink-0">
+            <span class="material-symbols-outlined text-[18px]">save</span>
+            <span>Save All Price Changes</span>
+          </button>
+        </div>
+
+        <!-- Filter for Price Editor -->
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-bold text-dark">Filter:</span>
+          <select id="priceCategoryFilter" onchange="renderPriceManagementTable()" class="p-2 rounded-xl border border-dark-border text-xs font-semibold bg-white focus:outline-none">
+            <!-- Dynamically populated -->
+          </select>
+        </div>
+
+        <!-- Bulk Price Table -->
+        <div class="bg-white rounded-2xl border border-dark-border shadow-xs overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-cream-dark/60 text-dark font-bold uppercase tracking-wider border-b border-dark-border">
+                <tr>
+                  <th class="p-3.5">Dish Name</th>
+                  <th class="p-3.5">Category</th>
+                  <th class="p-3.5">Regular / Small Price (₹)</th>
+                  <th class="p-3.5">Medium Price (₹)</th>
+                  <th class="p-3.5">Large Price (₹)</th>
+                </tr>
+              </thead>
+              <tbody id="priceTableBody" class="divide-y divide-dark-border/60">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="flex justify-end pt-2">
+          <button onclick="saveAllBulkPrices()" class="px-6 py-3 rounded-xl bg-green-fresh hover:bg-green-dark text-white font-bold text-sm flex items-center gap-2 shadow-md transition-all active:scale-95">
+            <span class="material-symbols-outlined text-[18px]">save</span>
+            <span>Save All Price Changes</span>
+          </button>
+        </div>
+
+      </section>
+
+      <!-- 4. LIVE ORDERS TAB -->
+      <section id="tabContent_orders" class="hidden space-y-5">
+        
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-dark-border shadow-xs">
+          <div>
+            <h3 class="font-title font-bold text-base text-dark">Real-Time Orders Feed</h3>
+            <p class="text-xs text-dark-muted">Manage incoming WhatsApp dining and delivery orders.</p>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <select id="orderStatusFilter" onchange="renderOrdersFeed()" class="p-2 rounded-xl border border-dark-border text-xs font-semibold focus:outline-none bg-white">
+              <option value="All">All Statuses</option>
+              <option value="Pending">Pending</option>
+              <option value="Confirmed">Confirmed</option>
+              <option value="Preparing">Preparing</option>
+              <option value="Delivered">Delivered</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Orders Cards List -->
+        <div id="ordersFeedContainer" class="space-y-4">
+          <!-- Dynamically populated -->
+        </div>
+
+      </section>
+
+      <!-- 5. RESTAURANT SETTINGS TAB -->
+      <section id="tabContent_settings" class="hidden space-y-6">
+        
+        <div class="bg-white p-5 rounded-2xl border border-dark-border shadow-xs">
+          <h3 class="font-title font-bold text-base text-burgundy mb-1">Restaurant Contact &amp; Delivery Settings</h3>
+          <p class="text-xs text-dark-muted mb-4">Edit cafe details, WhatsApp ordering number, and delivery policy.</p>
+
+          <form onsubmit="handleSaveRestaurantSettings(event)" class="space-y-4 max-w-2xl">
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-bold text-dark mb-1">Cafe Name</label>
+                <input id="setRestaurantName" type="text" class="w-full p-2.5 text-xs rounded-xl border border-dark-border focus:ring-1 focus:ring-burgundy" required>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-dark mb-1">WhatsApp Ordering Number (Digits only)</label>
+                <input id="setWhatsappNumber" type="text" placeholder="e.g. 918728867122" class="w-full p-2.5 text-xs rounded-xl border border-dark-border focus:ring-1 focus:ring-burgundy" required>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-bold text-dark mb-1">Primary Calling Phone</label>
+                <input id="setPhoneNumber" type="text" placeholder="+91 87288 67122" class="w-full p-2.5 text-xs rounded-xl border border-dark-border focus:ring-1 focus:ring-burgundy" required>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-dark mb-1">Secondary / Alternate Phone</label>
+                <input id="setAltPhoneNumber" type="text" placeholder="+91 98553 81984" class="w-full p-2.5 text-xs rounded-xl border border-dark-border focus:ring-1 focus:ring-burgundy">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t border-dark-border">
+              <div>
+                <label class="block text-xs font-bold text-dark mb-1">Minimum Order Amount (₹)</label>
+                <input id="setMinOrder" type="number" min="0" class="w-full p-2.5 text-xs rounded-xl border border-dark-border focus:ring-1 focus:ring-burgundy" required>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-dark mb-1">Free Delivery Radius (KM)</label>
+                <input id="setDeliveryRadius" type="number" min="0" step="0.5" class="w-full p-2.5 text-xs rounded-xl border border-dark-border focus:ring-1 focus:ring-burgundy" required>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-dark mb-1">Base Delivery Charge (₹)</label>
+                <input id="setDeliveryCharge" type="number" min="0" class="w-full p-2.5 text-xs rounded-xl border border-dark-border focus:ring-1 focus:ring-burgundy" required>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-dark mb-1">Delivery Policy Notice Text</label>
+              <input id="setDeliveryPolicy" type="text" class="w-full p-2.5 text-xs rounded-xl border border-dark-border focus:ring-1 focus:ring-burgundy" required>
+            </div>
+
+            <div class="pt-2">
+              <button type="submit" class="px-6 py-2.5 rounded-xl bg-burgundy hover:bg-burgundy-light text-white font-bold text-xs shadow-md transition-all">
+                Save Restaurant Settings
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Firebase Configuration & Sync -->
+        <div class="bg-white p-5 rounded-2xl border border-dark-border shadow-xs space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-title font-bold text-base text-dark">Firebase Cloud Integration</h3>
+              <p class="text-xs text-dark-muted">Connect your Firebase project for real-time Firestore database synchronization.</p>
+            </div>
+            <span id="firebaseCardStatus" class="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">
+              Not Connected
+            </span>
+          </div>
+
+          <form onsubmit="handleSaveFirebaseConfig(event)" class="space-y-3 max-w-2xl">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[11px] font-bold text-dark mb-1">API Key (apiKey)</label>
+                <input id="fbApiKey" type="text" class="w-full p-2 text-xs rounded-lg border border-dark-border">
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-dark mb-1">Project ID (projectId)</label>
+                <input id="fbProjectId" type="text" class="w-full p-2 text-xs rounded-lg border border-dark-border">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[11px] font-bold text-dark mb-1">Auth Domain (authDomain)</label>
+                <input id="fbAuthDomain" type="text" class="w-full p-2 text-xs rounded-lg border border-dark-border">
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-dark mb-1">Storage Bucket (storageBucket)</label>
+                <input id="fbStorageBucket" type="text" class="w-full p-2 text-xs rounded-lg border border-dark-border">
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3 pt-2">
+              <button type="submit" class="px-5 py-2 rounded-xl bg-dark hover:bg-black text-white font-bold text-xs transition-all">
+                Save &amp; Connect Firebase
+              </button>
+              <button type="button" onclick="seedFirestoreWithLocalMenu()" class="px-4 py-2 rounded-xl bg-green-fresh hover:bg-green-dark text-white font-bold text-xs flex items-center gap-1.5 transition-all">
+                <span class="material-symbols-outlined text-[16px]">cloud_upload</span>
+                <span>Seed Firestore with Current Menu</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+      </section>
+
+    </main>
+  </div>
+
+  <!-- MODAL: ADD / EDIT DISH -->
+  <div id="dishModal" class="fixed inset-0 z-50 flex items-center justify-center modal-backdrop p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-dark-border max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-dark-border mb-4">
+        <h3 id="dishModalTitle" class="font-title font-bold text-lg text-burgundy">Add New Dish</h3>
+        <button onclick="closeDishModal()" class="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-dark">
+          <span class="material-symbols-outlined text-[16px]">close</span>
+        </button>
+      </div>
+
+      <form onsubmit="handleSaveDish(event)" class="space-y-4">
+        <input type="hidden" id="dishEditId">
+
+        <div>
+          <label class="block text-xs font-bold text-dark mb-1">Dish Name *</label>
+          <input id="dishName" type="text" class="w-full p-2.5 text-xs rounded-xl border border-dark-border focus:ring-1 focus:ring-burgundy" required>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-dark mb-1">Category *</label>
+            <select id="dishCategory" class="w-full p-2.5 text-xs rounded-xl border border-dark-border focus:ring-1 focus:ring-burgundy" required>
+              <!-- Populated dynamically -->
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-dark mb-1">Dietary Type</label>
+            <div class="flex items-center gap-3 pt-2">
+              <label class="flex items-center gap-1.5 text-xs font-semibold cursor-pointer">
+                <input type="radio" name="dishDiet" value="veg" checked class="accent-green-fresh">
+                <span class="veg-symbol"></span>
+                <span>Veg</span>
+              </label>
+              <label class="flex items-center gap-1.5 text-xs font-semibold cursor-pointer">
+                <input type="radio" name="dishDiet" value="non_veg" class="accent-burgundy">
+                <span class="non-veg-symbol"></span>
+                <span>Non-Veg</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Price Section (Simple Price or Pizza Sizes) -->
+        <div id="dishSimplePriceGroup">
+          <label class="block text-xs font-bold text-dark mb-1">Base Price (₹) *</label>
+          <input id="dishPrice" type="number" min="0" class="w-full p-2.5 text-xs rounded-xl border border-dark-border focus:ring-1 focus:ring-burgundy">
+        </div>
+
+        <div id="dishPizzaSizesGroup" class="hidden space-y-2 p-3 bg-cream rounded-xl border border-dark-border">
+          <label class="block text-xs font-bold text-burgundy">Pizza Sizes Pricing (₹) *</label>
+          <div class="grid grid-cols-3 gap-2 text-xs">
+            <div>
+              <span class="text-[11px] font-semibold text-dark">Small:</span>
+              <input id="dishPizzaSmall" type="number" min="0" class="w-full p-2 rounded-lg border border-dark-border">
+            </div>
+            <div>
+              <span class="text-[11px] font-semibold text-dark">Medium:</span>
+              <input id="dishPizzaMedium" type="number" min="0" class="w-full p-2 rounded-lg border border-dark-border">
+            </div>
+            <div>
+              <span class="text-[11px] font-semibold text-dark">Large:</span>
+              <input id="dishPizzaLarge" type="number" min="0" class="w-full p-2 rounded-lg border border-dark-border">
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-dark mb-1">Description / Ingredients</label>
+          <textarea id="dishDescription" rows="2" class="w-full p-2.5 text-xs rounded-xl border border-dark-border focus:ring-1 focus:ring-burgundy"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-dark mb-1">Availability Status</label>
+          <select id="dishStatus" class="w-full p-2.5 text-xs rounded-xl border border-dark-border">
+            <option value="available">Available (In Stock)</option>
+            <option value="unavailable">Unavailable (Out of Stock)</option>
+          </select>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-dark-border">
+          <button type="button" onclick="closeDishModal()" class="px-4 py-2 rounded-xl text-xs font-bold text-dark hover:bg-gray-100">
+            Cancel
+          </button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-burgundy hover:bg-burgundy-light text-white font-bold text-xs shadow-xs">
+            Save Dish
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- CONFIRMATION MODAL -->
+  <div id="confirmModal" class="fixed inset-0 z-50 flex items-center justify-center modal-backdrop p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-dark-border text-center">
+      <div class="w-12 h-12 mx-auto rounded-full bg-red-100 text-red-600 flex items-center justify-center mb-3">
+        <span class="material-symbols-outlined text-2xl">warning</span>
+      </div>
+      <h3 id="confirmTitle" class="font-bold text-base text-dark mb-1">Confirm Action</h3>
+      <p id="confirmMessage" class="text-xs text-dark-muted mb-4"></p>
+      <div class="flex items-center justify-center gap-3">
+        <button id="confirmCancelBtn" class="px-4 py-2 rounded-xl text-xs font-bold text-dark hover:bg-gray-100">Cancel</button>
+        <button id="confirmActionBtn" class="px-4 py-2 rounded-xl text-xs font-bold bg-red-600 hover:bg-red-700 text-white shadow-xs">Yes, Proceed</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT APPLICATION CORE -->
+  <script>
+    let MENU_DATA = null;
+    let RESTAURANT_SETTINGS = {};
+    let ORDERS_LIST = [];
+    let activeTab = 'dashboard';
+
+    // Check Authentication
+    function checkAuth() {
+      const isAuth = sessionStorage.getItem('doubledeezz_admin_auth');
+      if (isAuth === 'true') {
+        document.getElementById('loginModal').classList.add('hidden');
+        document.getElementById('adminApp').classList.remove('hidden');
+        loadData();
+      } else {
+        document.getElementById('loginModal').classList.remove('hidden');
+        document.getElementById('adminApp').classList.add('hidden');
+      }
+    }
+
+    function handleAdminLogin(e) {
+      e.preventDefault();
+      const pin = document.getElementById('adminPinInput').value.trim();
+      // Accepts passcode 1818 or admin
+      if (pin === '1818' || pin === 'admin' || pin === 'doubledeezz') {
+        sessionStorage.setItem('doubledeezz_admin_auth', 'true');
+        checkAuth();
+      } else {
+        alert('Incorrect passcode. Please try again.');
+        document.getElementById('adminPinInput').value = '';
+      }
+    }
+
+    function handleAdminLogout() {
+      sessionStorage.removeItem('doubledeezz_admin_auth');
+      checkAuth();
+    }
+
+    // Switch Navigation Tabs
+    function switchTab(tabId) {
+      activeTab = tabId;
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('tab-active'));
+      const activeBtn = document.getElementById('tabBtn_' + tabId);
+      if (activeBtn) activeBtn.classList.add('tab-active');
+
+      ['dashboard', 'menu', 'prices', 'orders', 'settings'].forEach(t => {
+        const sec = document.getElementById('tabContent_' + t);
+        if (sec) {
+          if (t === tabId) sec.classList.remove('hidden');
+          else sec.classList.add('hidden');
+        }
+      });
+
+      if (tabId === 'dashboard') updateDashboardStats();
+      if (tabId === 'menu') renderAdminMenuList();
+      if (tabId === 'prices') renderPriceManagementTable();
+      if (tabId === 'orders') renderOrdersFeed();
+    }
+
+    // Load Data Layer
+    function loadData() {
+      // Firebase listener
+      if (window.DoubleDeezzFirebase) {
+        // Status Badge
+        updateFirebaseStatusUI();
+
+        window.DoubleDeezzFirebase.subscribeToMenu((data) => {
+          if (data && data._categories) {
+            MENU_DATA = data;
+            if (data._settings) RESTAURANT_SETTINGS = data._settings;
+            populateCategoryDropdowns();
+            updateDashboardStats();
+            if (activeTab === 'menu') renderAdminMenuList();
+            if (activeTab === 'prices') renderPriceManagementTable();
+          }
+        });
+
+        window.DoubleDeezzFirebase.subscribeToSettings((settings) => {
+          if (settings) {
+            RESTAURANT_SETTINGS = { ...RESTAURANT_SETTINGS, ...settings };
+            populateSettingsForm();
+          }
+        });
+
+        window.DoubleDeezzFirebase.subscribeToOrders((orders) => {
+          ORDERS_LIST = orders;
+          updateDashboardOrders();
+          if (activeTab === 'orders') renderOrdersFeed();
+        });
+      } else {
+        // Fallback API fetch
+        fetch('./api/menu')
+          .then(r => r.json())
+          .then(data => {
+            MENU_DATA = data;
+            if (data._settings) RESTAURANT_SETTINGS = data._settings;
+            populateCategoryDropdowns();
+            populateSettingsForm();
+            updateDashboardStats();
+          });
+
+        fetch('./api/orders')
+          .then(r => r.json())
+          .then(orders => {
+            ORDERS_LIST = orders;
+            updateDashboardOrders();
+          });
+      }
+    }
+
+    function updateFirebaseStatusUI() {
+      const badge = document.getElementById('firebaseStatusBadge');
+      const cardStatus = document.getElementById('firebaseCardStatus');
+      const isConfigured = window.DoubleDeezzFirebase && window.DoubleDeezzFirebase.isConfigured();
+
+      if (isConfigured) {
+        if (badge) {
+          badge.textContent = '🟢 Firebase Firestore Live';
+          badge.className = 'text-[10px] bg-green-dark/80 text-white px-2 py-0.5 rounded-full font-bold';
+        }
+        if (cardStatus) {
+          cardStatus.textContent = 'Connected & Synced';
+          cardStatus.className = 'text-xs font-bold px-2.5 py-1 rounded-full bg-green-100 text-green-800';
+        }
+      } else {
+        if (badge) {
+          badge.textContent = '🟡 Local Server Mode';
+          badge.className = 'text-[10px] bg-amber-500/80 text-white px-2 py-0.5 rounded-full font-medium';
+        }
+        if (cardStatus) {
+          cardStatus.textContent = 'Local Mode (Not Connected)';
+          cardStatus.className = 'text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800';
+        }
+      }
+
+      // Populate config fields
+      const cfg = window.DoubleDeezzFirebase ? window.DoubleDeezzFirebase.getConfig() : null;
+      if (cfg) {
+        if (document.getElementById('fbApiKey')) document.getElementById('fbApiKey').value = cfg.apiKey || '';
+        if (document.getElementById('fbProjectId')) document.getElementById('fbProjectId').value = cfg.projectId || '';
+        if (document.getElementById('fbAuthDomain')) document.getElementById('fbAuthDomain').value = cfg.authDomain || '';
+        if (document.getElementById('fbStorageBucket')) document.getElementById('fbStorageBucket').value = cfg.storageBucket || '';
+      }
+    }
+
+    function populateCategoryDropdowns() {
+      if (!MENU_DATA || !MENU_DATA._categories) return;
+      const categories = MENU_DATA._categories;
+
+      // Menu tab filter
+      const filterSelect = document.getElementById('adminCategoryFilter');
+      if (filterSelect) {
+        filterSelect.innerHTML = `<option value="all">All Categories (${categories.length})</option>` +
+          categories.map(c => `<option value="${c.id}">${c.emoji || ''} ${c.name}</option>`).join('');
+      }
+
+      // Dish modal category select
+      const dishCatSelect = document.getElementById('dishCategory');
+      if (dishCatSelect) {
+        dishCatSelect.innerHTML = categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+      }
+
+      // Price tab filter
+      const priceFilter = document.getElementById('priceCategoryFilter');
+      if (priceFilter) {
+        priceFilter.innerHTML = `<option value="all">All Categories</option>` +
+          categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+      }
+    }
+
+    function updateDashboardStats() {
+      if (!MENU_DATA) return;
+      let total = 0, available = 0, unavailable = 0;
+      (MENU_DATA._categories || []).forEach(c => {
+        (MENU_DATA[c.id] || []).forEach(it => {
+          total++;
+          if (it.status === 'unavailable') unavailable++;
+          else available++;
+        });
+      });
+
+      document.getElementById('statTotalItems').textContent = total;
+      document.getElementById('statTotalCategories').textContent = (MENU_DATA._categories || []).length;
+      document.getElementById('statAvailable').textContent = available;
+      document.getElementById('statOutOfStock').textContent = unavailable;
+    }
+
+    function updateDashboardOrders() {
+      const container = document.getElementById('dashboardRecentOrders');
+      const badge = document.getElementById('orderCountBadge');
+      if (!container) return;
+
+      if (badge && ORDERS_LIST.length > 0) {
+        badge.textContent = ORDERS_LIST.length;
+        badge.classList.remove('hidden');
+      }
+
+      if (ORDERS_LIST.length === 0) {
+        container.innerHTML = `<p class="py-6 text-center text-xs text-dark-muted">No orders recorded yet.</p>`;
+        return;
+      }
+
+      const recent = ORDERS_LIST.slice(0, 5);
+      container.innerHTML = recent.map(o => `
+        <div class="py-2.5 flex items-center justify-between text-xs">
+          <div>
+            <div class="font-bold text-dark">${o.customer?.name || 'Customer'} &bull; <span class="text-burgundy">₹${o.grandTotal}</span></div>
+            <div class="text-[11px] text-dark-muted">${(o.items || []).length} Items &bull; ${new Date(o.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+          </div>
+          <span class="px-2 py-0.5 rounded-full font-bold text-[10px] ${o.status === 'Delivered' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}">
+            ${o.status || 'Pending'}
+          </span>
+        </div>
+      `).join('');
+    }
+
+    // 2. Render Menu Management List
+    function renderAdminMenuList() {
+      const tbody = document.getElementById('adminMenuTableBody');
+      if (!tbody || !MENU_DATA) return;
+
+      const catFilter = document.getElementById('adminCategoryFilter')?.value || 'all';
+      const search = (document.getElementById('adminMenuSearch')?.value || '').toLowerCase().trim();
+
+      let html = '';
+      (MENU_DATA._categories || []).forEach(cat => {
+        if (catFilter !== 'all' && cat.id !== catFilter) return;
+
+        let items = MENU_DATA[cat.id] || [];
+        if (search) {
+          items = items.filter(it => it.name.toLowerCase().includes(search));
+        }
+
+        items.forEach(item => {
+          const isPizza = Array.isArray(item.variants) && item.variants.length > 0;
+          let priceStr = '';
+          if (isPizza) {
+            priceStr = item.variants.map(v => `${v.label[0]}: ₹${v.price}`).join(' | ');
+          } else {
+            priceStr = '₹' + item.price;
+          }
+
+          const isAvailable = item.status !== 'unavailable';
+
+          html += `
+            <tr class="hover:bg-cream/40 transition-colors">
+              <td class="p-3.5">
+                <div class="flex items-center gap-2">
+                  <span class="${item.isVeg ? 'veg-symbol' : 'non-veg-symbol'}"></span>
+                  <div>
+                    <div class="font-bold text-dark text-xs">${item.name}</div>
+                    <div class="text-[11px] text-dark-muted line-clamp-1">${item.description || ''}</div>
+                  </div>
+                </div>
+              </td>
+              <td class="p-3.5 font-medium text-dark-muted">${cat.name}</td>
+              <td class="p-3.5 font-bold text-burgundy">${priceStr}</td>
+              <td class="p-3.5">
+                <button onclick="toggleItemStock('${cat.id}', '${item.id || item.name}')" class="px-2.5 py-1 rounded-full text-[11px] font-bold transition-all ${isAvailable ? 'bg-green-100 text-green-800 hover:bg-green-200' : 'bg-red-100 text-red-800 hover:bg-red-200'}">
+                  ${isAvailable ? 'In Stock' : 'Out of Stock'}
+                </button>
+              </td>
+              <td class="p-3.5 text-right space-x-1">
+                <button onclick="openEditDishModal('${cat.id}', '${item.id || item.name}')" class="w-7 h-7 rounded-lg bg-cream hover:bg-cream-dark text-burgundy font-bold inline-flex items-center justify-center shadow-xs">
+                  <span class="material-symbols-outlined text-[15px]">edit</span>
+                </button>
+                <button onclick="confirmDeleteDish('${cat.id}', '${item.id || item.name}')" class="w-7 h-7 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 font-bold inline-flex items-center justify-center shadow-xs">
+                  <span class="material-symbols-outlined text-[15px]">delete</span>
+                </button>
+              </td>
+            </tr>
+          `;
+        });
+      });
+
+      tbody.innerHTML = html || `<tr><td colspan="5" class="p-8 text-center text-dark-muted">No dishes found.</td></tr>`;
+    }
+
+    // Toggle Item In/Out of Stock
+    async function toggleItemStock(catId, itemKey) {
+      const items = MENU_DATA[catId] || [];
+      const item = items.find(it => it.id === itemKey || it.name === itemKey);
+      if (!item) return;
+
+      item.status = (item.status === 'unavailable') ? 'available' : 'unavailable';
+      await saveMenu();
+      renderAdminMenuList();
+      updateDashboardStats();
+    }
+
+    // Open Add Dish Modal
+    function openAddItemModal() {
+      document.getElementById('dishModalTitle').textContent = 'Add New Dish';
+      document.getElementById('dishEditId').value = '';
+      document.getElementById('dishName').value = '';
+      document.getElementById('dishPrice').value = '';
+      document.getElementById('dishDescription').value = '';
+      document.getElementById('dishStatus').value = 'available';
+
+      // Check category and toggle pizza fields
+      const catSelect = document.getElementById('dishCategory');
+      catSelect.onchange = () => togglePizzaSizeFields(catSelect.value);
+      togglePizzaSizeFields(catSelect.value);
+
+      document.getElementById('dishModal').classList.remove('hidden');
+    }
+
+    function togglePizzaSizeFields(catId) {
+      const isPizza = catId.includes('pizza');
+      const simpleGrp = document.getElementById('dishSimplePriceGroup');
+      const pizzaGrp = document.getElementById('dishPizzaSizesGroup');
+
+      if (isPizza) {
+        simpleGrp.classList.add('hidden');
+        pizzaGrp.classList.remove('hidden');
+      } else {
+        simpleGrp.classList.remove('hidden');
+        pizzaGrp.classList.add('hidden');
+      }
+    }
+
+    function openEditDishModal(catId, itemKey) {
+      const items = MENU_DATA[catId] || [];
+      const item = items.find(it => it.id === itemKey || it.name === itemKey);
+      if (!item) return;
+
+      document.getElementById('dishModalTitle').textContent = 'Edit Dish: ' + item.name;
+      document.getElementById('dishEditId').value = `${catId}:::${item.id || item.name}`;
+      document.getElementById('dishName').value = item.name;
+      document.getElementById('dishCategory').value = catId;
+      document.getElementById('dishDescription').value = item.description || '';
+      document.getElementById('dishStatus').value = item.status || 'available';
+
+      const dietRadio = document.querySelector(`input[name="dishDiet"][value="${item.isVeg ? 'veg' : 'non_veg'}"]`);
+      if (dietRadio) dietRadio.checked = true;
+
+      const isPizza = Array.isArray(item.variants) && item.variants.length > 0;
+      togglePizzaSizeFields(catId);
+
+      if (isPizza) {
+        const s = item.variants.find(v => v.label === 'Small')?.price || '';
+        const m = item.variants.find(v => v.label === 'Medium')?.price || '';
+        const l = item.variants.find(v => v.label === 'Large')?.price || '';
+        document.getElementById('dishPizzaSmall').value = s;
+        document.getElementById('dishPizzaMedium').value = m;
+        document.getElementById('dishPizzaLarge').value = l;
+      } else {
+        document.getElementById('dishPrice').value = item.price || 0;
+      }
+
+      document.getElementById('dishModal').classList.remove('hidden');
+    }
+
+    function closeDishModal() {
+      document.getElementById('dishModal').classList.add('hidden');
+    }
+
+    // Save Dish (Add or Edit)
+    async function handleSaveDish(e) {
+      e.preventDefault();
+      const editToken = document.getElementById('dishEditId').value;
+      const name = document.getElementById('dishName').value.trim();
+      const catId = document.getElementById('dishCategory').value;
+      const isVeg = document.querySelector('input[name="dishDiet"]:checked').value === 'veg';
+      const description = document.getElementById('dishDescription').value.trim();
+      const status = document.getElementById('dishStatus').value;
+
+      const isPizza = catId.includes('pizza');
+      let price = 0;
+      let variants = null;
+
+      if (isPizza) {
+        const s = Number(document.getElementById('dishPizzaSmall').value) || 0;
+        const m = Number(document.getElementById('dishPizzaMedium').value) || 0;
+        const l = Number(document.getElementById('dishPizzaLarge').value) || 0;
+        variants = [
+          { label: 'Small', price: s },
+          { label: 'Medium', price: m },
+          { label: 'Large', price: l }
+        ];
+      } else {
+        price = Number(document.getElementById('dishPrice').value) || 0;
+      }
+
+      if (editToken) {
+        // Edit existing dish
+        const [oldCat, oldKey] = editToken.split(':::');
+        const oldList = MENU_DATA[oldCat] || [];
+        const idx = oldList.findIndex(it => it.id === oldKey || it.name === oldKey);
+        if (idx !== -1) {
+          const existing = oldList[idx];
+          const updatedDish = {
+            ...existing,
+            name,
+            isVeg,
+            description,
+            status,
+            ...(variants ? { variants } : { price })
+          };
+
+          if (oldCat === catId) {
+            oldList[idx] = updatedDish;
+          } else {
+            oldList.splice(idx, 1);
+            if (!MENU_DATA[catId]) MENU_DATA[catId] = [];
+            MENU_DATA[catId].push(updatedDish);
+          }
+        }
+      } else {
+        // Add new dish
+        const newDish = {
+          id: 'dish_' + Date.now(),
+          name,
+          isVeg,
+          description,
+          status,
+          ...(variants ? { variants } : { price })
+        };
+        if (!MENU_DATA[catId]) MENU_DATA[catId] = [];
+        MENU_DATA[catId].push(newDish);
+      }
+
+      await saveMenu();
+      closeDishModal();
+      renderAdminMenuList();
+      updateDashboardStats();
+      alert('Dish saved successfully!');
+    }
+
+    // Delete Dish Confirmation
+    function confirmDeleteDish(catId, itemKey) {
+      const items = MENU_DATA[catId] || [];
+      const item = items.find(it => it.id === itemKey || it.name === itemKey);
+      if (!item) return;
+
+      document.getElementById('confirmTitle').textContent = `Delete "${item.name}"?`;
+      document.getElementById('confirmMessage').textContent = 'Are you sure you want to permanently delete this menu item? This cannot be undone.';
+      
+      const proceedBtn = document.getElementById('confirmActionBtn');
+      proceedBtn.onclick = async () => {
+        const idx = items.findIndex(it => it.id === itemKey || it.name === itemKey);
+        if (idx !== -1) {
+          items.splice(idx, 1);
+          await saveMenu();
+          renderAdminMenuList();
+          updateDashboardStats();
+        }
+        document.getElementById('confirmModal').classList.add('hidden');
+      };
+
+      document.getElementById('confirmCancelBtn').onclick = () => {
+        document.getElementById('confirmModal').classList.add('hidden');
+      };
+
+      document.getElementById('confirmModal').classList.remove('hidden');
+    }
+
+    // 3. Fast Bulk Price Editor
+    function renderPriceManagementTable() {
+      const tbody = document.getElementById('priceTableBody');
+      if (!tbody || !MENU_DATA) return;
+
+      const filter = document.getElementById('priceCategoryFilter')?.value || 'all';
+      let html = '';
+
+      (MENU_DATA._categories || []).forEach(cat => {
+        if (filter !== 'all' && cat.id !== filter) return;
+
+        const items = MENU_DATA[cat.id] || [];
+        items.forEach((item, index) => {
+          const isPizza = Array.isArray(item.variants) && item.variants.length > 0;
+          const s = isPizza ? (item.variants.find(v => v.label === 'Small')?.price || 0) : item.price;
+          const m = isPizza ? (item.variants.find(v => v.label === 'Medium')?.price || 0) : '';
+          const l = isPizza ? (item.variants.find(v => v.label === 'Large')?.price || 0) : '';
+
+          html += `
+            <tr class="hover:bg-cream/40">
+              <td class="p-3.5 font-bold text-dark flex items-center gap-2">
+                <span class="${item.isVeg ? 'veg-symbol' : 'non-veg-symbol'}"></span>
+                <span>${item.name}</span>
+              </td>
+              <td class="p-3.5 text-dark-muted font-medium">${cat.name}</td>
+              <td class="p-3.5">
+                <input type="number" min="0" data-cat="${cat.id}" data-id="${item.id || item.name}" data-field="s" value="${s}" class="w-24 p-1.5 rounded-lg border border-dark-border font-bold text-burgundy text-center">
+              </td>
+              <td class="p-3.5">
+                ${isPizza ? `
+                  <input type="number" min="0" data-cat="${cat.id}" data-id="${item.id || item.name}" data-field="m" value="${m}" class="w-24 p-1.5 rounded-lg border border-dark-border font-bold text-burgundy text-center">
+                ` : `<span class="text-dark-muted">-</span>`}
+              </td>
+              <td class="p-3.5">
+                ${isPizza ? `
+                  <input type="number" min="0" data-cat="${cat.id}" data-id="${item.id || item.name}" data-field="l" value="${l}" class="w-24 p-1.5 rounded-lg border border-dark-border font-bold text-burgundy text-center">
+                ` : `<span class="text-dark-muted">-</span>`}
+              </td>
+            </tr>
+          `;
+        });
+      });
+
+      tbody.innerHTML = html;
+    }
+
+    async function saveAllBulkPrices() {
+      const inputs = document.querySelectorAll('#priceTableBody input[data-cat]');
+      inputs.forEach(input => {
+        const cat = input.getAttribute('data-cat');
+        const id = input.getAttribute('data-id');
+        const field = input.getAttribute('data-field');
+        const val = Number(input.value) || 0;
+
+        const items = MENU_DATA[cat] || [];
+        const item = items.find(it => it.id === id || it.name === id);
+        if (item) {
+          if (item.variants && item.variants.length > 0) {
+            const vLabel = (field === 's') ? 'Small' : (field === 'm' ? 'Medium' : 'Large');
+            const targetVar = item.variants.find(v => v.label === vLabel);
+            if (targetVar) targetVar.price = val;
+          } else {
+            item.price = val;
+          }
+        }
+      });
+
+      await saveMenu();
+      alert('All prices updated and saved successfully! Customers now see the updated prices.');
+    }
+
+    // 4. Live Orders Feed
+    function renderOrdersFeed() {
+      const container = document.getElementById('ordersFeedContainer');
+      if (!container) return;
+
+      const filter = document.getElementById('orderStatusFilter')?.value || 'All';
+      let orders = ORDERS_LIST;
+
+      if (filter !== 'All') {
+        orders = orders.filter(o => o.status === filter);
+      }
+
+      if (orders.length === 0) {
+        container.innerHTML = `<div class="bg-white p-12 text-center text-dark-muted rounded-2xl border border-dark-border">No ${filter === 'All' ? '' : filter} orders found.</div>`;
+        return;
+      }
+
+      container.innerHTML = orders.map(o => {
+        const items = o.items || [];
+        const cust = o.customer || {};
+
+        return `
+          <div class="bg-white rounded-2xl p-5 border border-dark-border shadow-xs space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-dark-border/60 pb-3">
+              <div>
+                <span class="text-xs font-bold text-burgundy">Order #${o.id || 'N/A'}</span>
+                <span class="text-xs text-dark-muted ml-2">${new Date(o.timestamp).toLocaleString()}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold px-3 py-1 rounded-full ${o.status === 'Delivered' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}">
+                  ${o.status || 'Pending'}
+                </span>
+                <select onchange="updateOrderStatus('${o.id}', this.value)" class="text-xs p-1 rounded-lg border border-dark-border font-semibold">
+                  <option value="Pending" ${o.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                  <option value="Confirmed" ${o.status === 'Confirmed' ? 'selected' : ''}>Confirmed</option>
+                  <option value="Preparing" ${o.status === 'Preparing' ? 'selected' : ''}>Preparing</option>
+                  <option value="Delivered" ${o.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
+                  <option value="Cancelled" ${o.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Customer Details -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs bg-cream p-3 rounded-xl">
+              <div>
+                <span class="font-bold text-dark">Customer:</span> ${cust.name || 'Anonymous'}
+              </div>
+              <div>
+                <span class="font-bold text-dark">Phone:</span>
+                <a href="tel:${cust.phone}" class="text-burgundy font-bold hover:underline">${cust.phone}</a>
+                <a href="https://wa.me/${(cust.phone || '').replace(/[^0-9]/g, '')}" target="_blank" class="ml-2 text-green-fresh font-bold hover:underline">WhatsApp</a>
+              </div>
+              <div>
+                <span class="font-bold text-dark">Type:</span> ${cust.orderType || 'Delivery'}
+              </div>
+              ${cust.address ? `<div class="sm:col-span-3"><span class="font-bold text-dark">Delivery Address:</span> ${cust.address}</div>` : ''}
+              ${cust.notes ? `<div class="sm:col-span-3 text-dark-muted"><span class="font-bold text-dark">Cooking Note:</span> ${cust.notes}</div>` : ''}
+            </div>
+
+            <!-- Ordered Items List -->
+            <div class="space-y-1 text-xs">
+              ${items.map(it => `
+                <div class="flex justify-between py-1 border-b border-dark-border/40">
+                  <div>
+                    <span class="font-bold text-dark">${it.qty}x ${it.name}</span>
+                    ${it.variantLabel ? `<span class="text-dark-muted font-medium">(${it.variantLabel})</span>` : ''}
+                    ${it.addons && it.addons.length ? `<span class="text-burgundy text-[11px] block">+ ${it.addons.map(a => a.name).join(', ')}</span>` : ''}
+                  </div>
+                  <span class="font-bold text-dark">₹${(it.price || 0) * (it.qty || 1)}</span>
+                </div>
+              `).join('')}
+            </div>
+
+            <div class="flex justify-between items-center pt-2 font-bold text-sm">
+              <span class="text-dark">Grand Total:</span>
+              <span class="text-burgundy font-title text-base">₹${o.grandTotal}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function updateOrderStatus(orderId, newStatus) {
+      if (window.DoubleDeezzFirebase && window.DoubleDeezzFirebase.updateOrderStatus) {
+        await window.DoubleDeezzFirebase.updateOrderStatus(orderId, newStatus);
+      }
+      const target = ORDERS_LIST.find(o => o.id === orderId);
+      if (target) target.status = newStatus;
+      renderOrdersFeed();
+      updateDashboardOrders();
+    }
+
+    // 5. Settings & Cloud Sync
+    function populateSettingsForm() {
+      const s = RESTAURANT_SETTINGS;
+      if (document.getElementById('setRestaurantName')) document.getElementById('setRestaurantName').value = s.name || 'Double Deezz The Food Cafe';
+      if (document.getElementById('setWhatsappNumber')) document.getElementById('setWhatsappNumber').value = s.whatsapp || '918728867122';
+      if (document.getElementById('setPhoneNumber')) document.getElementById('setPhoneNumber').value = s.phone || '+91 87288 67122';
+      if (document.getElementById('setAltPhoneNumber')) document.getElementById('setAltPhoneNumber').value = s.altPhone || '+91 98553 81984';
+      if (document.getElementById('setMinOrder')) document.getElementById('setMinOrder').value = s.minOrderAmount || 300;
+      if (document.getElementById('setDeliveryRadius')) document.getElementById('setDeliveryRadius').value = s.freeDeliveryRadiusKm || 3;
+      if (document.getElementById('setDeliveryCharge')) document.getElementById('setDeliveryCharge').value = s.baseDeliveryCharge || 0;
+      if (document.getElementById('setDeliveryPolicy')) document.getElementById('setDeliveryPolicy').value = s.deliveryPolicy || 'Free home delivery up to 3 KM • Minimum order ₹300';
+    }
+
+    async function handleSaveRestaurantSettings(e) {
+      e.preventDefault();
+      const updated = {
+        name: document.getElementById('setRestaurantName').value.trim(),
+        whatsapp: document.getElementById('setWhatsappNumber').value.trim().replace(/[^0-9]/g, ''),
+        phone: document.getElementById('setPhoneNumber').value.trim(),
+        altPhone: document.getElementById('setAltPhoneNumber').value.trim(),
+        minOrderAmount: Number(document.getElementById('setMinOrder').value) || 300,
+        freeDeliveryRadiusKm: Number(document.getElementById('setDeliveryRadius').value) || 3,
+        baseDeliveryCharge: Number(document.getElementById('setDeliveryCharge').value) || 0,
+        deliveryPolicy: document.getElementById('setDeliveryPolicy').value.trim()
+      };
+
+      RESTAURANT_SETTINGS = { ...RESTAURANT_SETTINGS, ...updated };
+      MENU_DATA._settings = RESTAURANT_SETTINGS;
+
+      if (window.DoubleDeezzFirebase && window.DoubleDeezzFirebase.saveSettings) {
+        await window.DoubleDeezzFirebase.saveSettings(RESTAURANT_SETTINGS);
+      }
+      await saveMenu();
+      alert('Restaurant settings saved successfully! WhatsApp ordering number and delivery policy updated.');
+    }
+
+    function handleSaveFirebaseConfig(e) {
+      e.preventDefault();
+      const cfg = {
+        apiKey: document.getElementById('fbApiKey').value.trim(),
+        projectId: document.getElementById('fbProjectId').value.trim(),
+        authDomain: document.getElementById('fbAuthDomain').value.trim(),
+        storageBucket: document.getElementById('fbStorageBucket').value.trim()
+      };
+
+      if (!cfg.apiKey || !cfg.projectId) {
+        alert('Please enter at least API Key and Project ID.');
+        return;
+      }
+
+      if (window.DoubleDeezzFirebase) {
+        const ok = window.DoubleDeezzFirebase.setConfig(cfg);
+        if (ok) {
+          alert('Firebase configuration saved and initialized successfully!');
+        } else {
+          alert('Configuration saved. Please verify internet connection.');
+        }
+        updateFirebaseStatusUI();
+      }
+    }
+
+    async function seedFirestoreWithLocalMenu() {
+      if (!window.DoubleDeezzFirebase || !window.DoubleDeezzFirebase.isConfigured()) {
+        alert('Please enter and save your Firebase Project credentials above before seeding the database.');
+        return;
+      }
+
+      try {
+        await window.DoubleDeezzFirebase.seedFirestore(MENU_DATA);
+        alert('🎉 Cloud Firestore has been successfully seeded with the complete Double Deezz menu and restaurant settings!');
+      } catch (e) {
+        alert('Seeding error: ' + e.message);
+      }
+    }
+
+    // Save Entire Menu Object to Cloud & Server
+    async function saveMenu() {
+      if (window.DoubleDeezzFirebase && window.DoubleDeezzFirebase.saveMenuToCloud) {
+        await window.DoubleDeezzFirebase.saveMenuToCloud(MENU_DATA);
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', checkAuth);
+  </script>
+</body>
+</html>
