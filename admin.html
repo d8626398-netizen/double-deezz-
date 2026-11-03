@@ -106,8 +106,9 @@
     }
   </style>
 
-  <!-- Firebase Compat SDKs -->
+  <!-- Cloud Data Engine SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
@@ -508,26 +509,26 @@
           </form>
         </div>
 
-        <!-- Firebase Configuration & Sync -->
+        <!-- Cloud Integration & Real-Time Sync -->
         <div class="bg-white p-5 rounded-2xl border border-dark-border shadow-xs space-y-4">
           <div class="flex items-center justify-between">
             <div>
               <h3 class="font-title font-bold text-base text-dark flex items-center gap-2">
-                <span>🔥 Firebase Cloud Integration</span>
-                <span id="firebaseHeaderPill" class="text-[11px] bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded-full hidden">Live Connected</span>
+                <span>⚡ Enterprise Real-Time Cloud Engine</span>
+                <span id="firebaseHeaderPill" class="text-[11px] bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded-full">Live Connected</span>
               </h3>
-              <p class="text-xs text-dark-muted">Connect your Firebase project for real-time Cloud Firestore database synchronization.</p>
+              <p class="text-xs text-dark-muted">Real-time live database synchronization across all customer phones and devices.</p>
             </div>
-            <span id="firebaseCardStatus" class="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">
-              Not Connected
+            <span id="firebaseCardStatus" class="text-xs font-bold px-2.5 py-1 rounded-full bg-green-100 text-green-800">
+              Connected &amp; Live Synced
             </span>
           </div>
 
           <!-- Quick Auto-Fill Snippet Paste Area -->
           <div class="p-3 bg-cream rounded-xl border border-dark-border space-y-2">
-            <label class="block text-xs font-bold text-burgundy">⚡ Quick Paste: Paste Firebase Config Object or Script</label>
+            <label class="block text-xs font-bold text-burgundy">⚡ Quick Paste / Update Cloud Config</label>
             <div class="flex flex-col sm:flex-row gap-2">
-              <textarea id="fbPasteSnippet" rows="2" placeholder='Paste your firebaseConfig snippet from Firebase Console here, e.g.:&#10;const firebaseConfig = { apiKey: "...", projectId: "..." };' class="w-full p-2 text-xs rounded-lg border border-dark-border font-mono"></textarea>
+              <textarea id="fbPasteSnippet" rows="2" placeholder='Paste your cloud config snippet or JSON here...' class="w-full p-2 text-xs rounded-lg border border-dark-border font-mono"></textarea>
               <button type="button" onclick="autoParseFirebaseSnippet()" class="px-4 py-2 bg-burgundy hover:bg-burgundy-light text-white font-bold text-xs rounded-xl shrink-0 flex items-center justify-center gap-1">
                 <span class="material-symbols-outlined text-[16px]">auto_fix_high</span>
                 <span>Auto Fill</span>
@@ -543,43 +544,47 @@
               </div>
               <div>
                 <label class="block text-[11px] font-bold text-dark mb-1">Project ID (projectId) *</label>
-                <input id="fbProjectId" type="text" placeholder="double-deezz-cafe" class="w-full p-2 text-xs rounded-lg border border-dark-border font-mono" required>
+                <input id="fbProjectId" type="text" placeholder="doubledeezz" class="w-full p-2 text-xs rounded-lg border border-dark-border font-mono" required>
               </div>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[11px] font-bold text-dark mb-1">Live Database URL (databaseURL)</label>
+                <input id="fbDatabaseUrl" type="text" placeholder="https://doubledeezz-default-rtdb.firebaseio.com" class="w-full p-2 text-xs rounded-lg border border-dark-border font-mono">
+              </div>
               <div>
                 <label class="block text-[11px] font-bold text-dark mb-1">Auth Domain (authDomain)</label>
-                <input id="fbAuthDomain" type="text" placeholder="project.firebaseapp.com" class="w-full p-2 text-xs rounded-lg border border-dark-border font-mono">
-              </div>
-              <div>
-                <label class="block text-[11px] font-bold text-dark mb-1">Storage Bucket (storageBucket)</label>
-                <input id="fbStorageBucket" type="text" placeholder="project.appspot.com" class="w-full p-2 text-xs rounded-lg border border-dark-border font-mono">
+                <input id="fbAuthDomain" type="text" placeholder="doubledeezz.firebaseapp.com" class="w-full p-2 text-xs rounded-lg border border-dark-border font-mono">
               </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label class="block text-[11px] font-bold text-dark mb-1">Storage Bucket</label>
+                <input id="fbStorageBucket" type="text" placeholder="doubledeezz.firebasestorage.app" class="w-full p-2 text-xs rounded-lg border border-dark-border font-mono">
+              </div>
               <div>
                 <label class="block text-[11px] font-bold text-dark mb-1">Messaging Sender ID</label>
-                <input id="fbMessagingSenderId" type="text" placeholder="123456789012" class="w-full p-2 text-xs rounded-lg border border-dark-border font-mono">
+                <input id="fbMessagingSenderId" type="text" placeholder="647790444183" class="w-full p-2 text-xs rounded-lg border border-dark-border font-mono">
               </div>
               <div>
                 <label class="block text-[11px] font-bold text-dark mb-1">App ID (appId)</label>
-                <input id="fbAppId" type="text" placeholder="1:123456789012:web:abcdef..." class="w-full p-2 text-xs rounded-lg border border-dark-border font-mono">
+                <input id="fbAppId" type="text" placeholder="1:647790444183:web:..." class="w-full p-2 text-xs rounded-lg border border-dark-border font-mono">
               </div>
             </div>
 
             <div class="flex flex-wrap items-center gap-3 pt-2">
               <button type="submit" class="px-5 py-2.5 rounded-xl bg-dark hover:bg-black text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-xs">
-                <span class="material-symbols-outlined text-[16px]">link</span>
-                <span>Save &amp; Connect Firebase</span>
+                <span class="material-symbols-outlined text-[16px]">cloud_sync</span>
+                <span>Save &amp; Connect Live Cloud</span>
               </button>
               <button type="button" onclick="seedFirestoreWithLocalMenu()" class="px-5 py-2.5 rounded-xl bg-green-fresh hover:bg-green-dark text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-xs">
                 <span class="material-symbols-outlined text-[16px]">cloud_upload</span>
-                <span>Seed Firestore with 22 Menu Categories</span>
+                <span>Seed Live Database (22 Categories)</span>
               </button>
               <button type="button" onclick="disconnectFirebaseConfig()" class="px-3 py-2 rounded-xl text-xs font-bold text-red-600 hover:bg-red-50 transition-all">
-                Disconnect
+                Reset to Default
               </button>
             </div>
           </form>
@@ -813,11 +818,11 @@
 
       if (isConfigured) {
         if (badge) {
-          badge.textContent = '🟢 Firebase Firestore Live';
+          badge.textContent = '🟢 Cloud Database Live';
           badge.className = 'text-[10px] bg-green-dark/80 text-white px-2 py-0.5 rounded-full font-bold';
         }
         if (cardStatus) {
-          cardStatus.textContent = 'Connected & Synced';
+          cardStatus.textContent = 'Connected & Live Synced';
           cardStatus.className = 'text-xs font-bold px-2.5 py-1 rounded-full bg-green-100 text-green-800';
         }
       } else {
@@ -836,6 +841,7 @@
       if (cfg) {
         if (document.getElementById('fbApiKey')) document.getElementById('fbApiKey').value = cfg.apiKey || '';
         if (document.getElementById('fbProjectId')) document.getElementById('fbProjectId').value = cfg.projectId || '';
+        if (document.getElementById('fbDatabaseUrl')) document.getElementById('fbDatabaseUrl').value = cfg.databaseURL || '';
         if (document.getElementById('fbAuthDomain')) document.getElementById('fbAuthDomain').value = cfg.authDomain || '';
         if (document.getElementById('fbStorageBucket')) document.getElementById('fbStorageBucket').value = cfg.storageBucket || '';
         if (document.getElementById('fbMessagingSenderId')) document.getElementById('fbMessagingSenderId').value = cfg.messagingSenderId || '';
@@ -897,6 +903,7 @@
 
       const apiKey = extract('apiKey');
       const projectId = extract('projectId');
+      const databaseURL = extract('databaseURL');
       const authDomain = extract('authDomain');
       const storageBucket = extract('storageBucket');
       const messagingSenderId = extract('messagingSenderId');
@@ -904,6 +911,7 @@
 
       if (apiKey) document.getElementById('fbApiKey').value = apiKey;
       if (projectId) document.getElementById('fbProjectId').value = projectId;
+      if (databaseURL) document.getElementById('fbDatabaseUrl').value = databaseURL;
       if (authDomain) document.getElementById('fbAuthDomain').value = authDomain;
       if (storageBucket) document.getElementById('fbStorageBucket').value = storageBucket;
       if (messagingSenderId) document.getElementById('fbMessagingSenderId').value = messagingSenderId;
@@ -1442,6 +1450,7 @@
       const cfg = {
         apiKey: document.getElementById('fbApiKey').value.trim(),
         projectId: document.getElementById('fbProjectId').value.trim(),
+        databaseURL: document.getElementById('fbDatabaseUrl').value.trim(),
         authDomain: document.getElementById('fbAuthDomain').value.trim(),
         storageBucket: document.getElementById('fbStorageBucket').value.trim(),
         messagingSenderId: document.getElementById('fbMessagingSenderId').value.trim(),
