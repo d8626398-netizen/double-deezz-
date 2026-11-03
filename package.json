@@ -1,0 +1,10 @@
+{
+  "name": "grillqr",
+  "version": "1.0.0",
+  "description": "Grill Island Artisanal Live Grill & Tandoor",
+  "main": "server.js",
+  "scripts": {
+    "build": "echo 'Static build ready'",
+    "start": "node server.js"
+  }
+}

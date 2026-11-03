@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+  <meta name="theme-color" content="#861B40">
+  <title>Double Deezz The Food Cafe | QR Menu &amp; Online Order</title>
+
+  <!-- Google Fonts & Material Symbols -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600..800;1,600..800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            burgundy: {
+              DEFAULT: '#861B40',
+              dark: '#65122F',
+              light: '#A02752',
+              soft: '#F6EBF0'
+            },
+            green: {
+              fresh: '#26966F',
+              dark: '#1C7456',
+              light: '#32B386',
+              soft: '#EAF7F2'
+            },
+            cream: {
+              DEFAULT: '#FFF8E9',
+              dark: '#F5ECD5',
+              card: '#FCF5E5'
+            },
+            dark: {
+              DEFAULT: '#242424',
+              muted: '#686868',
+              border: '#E8DFD5'
+            }
+          },
+          fontFamily: {
+            body: ['"Plus Jakarta Sans"', 'sans-serif'],
+            title: ['"Playfair Display"', 'serif']
+          },
+          boxShadow: {
+            'soft': '0 4px 20px -2px rgba(134, 27, 64, 0.08)',
+            'card': '0 2px 12px rgba(0, 0, 0, 0.04)',
+            'cart': '0 -4px 25px rgba(134, 27, 64, 0.18)'
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    * {
+      -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
+    }
+    body {
+      background-color: #FFF8E9;
+      color: #242424;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .scrollbar-none::-webkit-scrollbar { display: none; }
+    .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+    
+    /* FSSAI Veg and Non-Veg Symbols */
+    .veg-symbol {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      border: 1.5px solid #26966F;
+      border-radius: 3px;
+      background: #FFFFFF;
+      padding: 1px;
+    }
+    .veg-symbol::after {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #26966F;
+    }
+    .non-veg-symbol {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      border: 1.5px solid #861B40;
+      border-radius: 3px;
+      background: #FFFFFF;
+      padding: 1px;
+    }
+    .non-veg-symbol::after {
+      content: '';
+      width: 0;
+      height: 0;
+      border-left: 4.5px solid transparent;
+      border-right: 4.5px solid transparent;
+      border-bottom: 8px solid #861B40;
+    }
+
+    .modal-backdrop {
+      background: rgba(36, 36, 36, 0.65);
+      backdrop-filter: blur(4px);
+    }
+    .pill-active {
+      background-color: #861B40 !important;
+      color: #FFFFFF !important;
+      border-color: #861B40 !important;
+      box-shadow: 0 4px 12px rgba(134, 27, 64, 0.25);
+    }
+  </style>
+
+  <!-- Firebase Compat SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+  <script src="./firebase-config.js"></script>
+</head>
+<body class="min-h-screen flex flex-col pb-24 antialiased selection:bg-burgundy selection:text-white">
+
+  <!-- TOP HEADER (Deep Burgundy & Cream) -->
+  <header class="sticky top-0 z-40 bg-burgundy text-white shadow-md">
+    <div class="max-w-4xl mx-auto px-4 py-2.5 flex items-center justify-between">
+      
+      <!-- Brand Logo & Name -->
+      <a href="./" class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full overflow-hidden border-2 border-white/60 bg-cream shrink-0 shadow-inner">
+          <img src="./logo.jpg" alt="Double Deezz Logo" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=120&q=80'">
+        </div>
+        <div class="flex flex-col">
+          <div class="flex items-center gap-1.5">
+            <h1 class="font-title font-bold text-base md:text-lg tracking-wide text-cream leading-tight">DOUBLE DEEZZ</h1>
+            <span class="text-[10px] bg-green-fresh/90 text-white font-bold px-1.5 py-0.2 rounded uppercase tracking-wider">Cafe</span>
+          </div>
+          <span class="text-[11px] text-cream/80 font-medium">The Food Cafe &bull; Phagwara</span>
+        </div>
+      </a>
+
+      <!-- Quick Action Buttons -->
+      <div class="flex items-center gap-2">
+        <!-- Call Button -->
+        <a id="headerCallBtn" href="tel:+918728867122" class="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-cream transition-all" title="Call Cafe">
+          <span class="material-symbols-outlined text-[18px]">call</span>
+        </a>
+
+        <!-- Search Toggle -->
+        <button onclick="toggleSearch()" class="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-cream transition-all" title="Search Dishes">
+          <span class="material-symbols-outlined text-[18px]">search</span>
+        </button>
+
+        <!-- Admin Portal Link -->
+        <a href="./admin.html" class="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-cream transition-all" title="Admin Portal">
+          <span class="material-symbols-outlined text-[18px]">admin_panel_settings</span>
+        </a>
+
+        <!-- Header Cart Pill -->
+        <button onclick="openCartModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-fresh hover:bg-green-dark text-white font-bold text-xs shadow transition-transform active:scale-95">
+          <span class="material-symbols-outlined text-[16px]">shopping_bag</span>
+          <span id="headerCartCount">0</span>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Collapsible Search Bar -->
+    <div id="searchContainer" class="hidden px-4 pb-3 max-w-4xl mx-auto transition-all">
+      <div class="relative">
+        <span class="material-symbols-outlined absolute left-3 top-2.5 text-dark-muted text-[19px]">search</span>
+        <input id="searchInput" type="text" placeholder="Search burgers, pizzas, noodles, wraps..." oninput="handleSearch(this.value)" class="w-full bg-white text-dark pl-9 pr-9 py-2 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-fresh shadow-sm placeholder-dark-muted">
+        <button onclick="clearSearch()" class="absolute right-3 top-2.5 text-dark-muted hover:text-dark">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- NOTICE BANNER: Delivery & Cafe Highlights -->
+  <div class="bg-cream-dark/80 border-b border-dark-border/60 py-2 px-4">
+    <div class="max-w-4xl mx-auto flex flex-wrap items-center justify-between gap-2 text-xs">
+      <div class="flex items-center gap-2 text-burgundy font-semibold">
+        <span class="material-symbols-outlined text-[16px] text-green-fresh">delivery_dining</span>
+        <span id="bannerDeliveryPolicy">Free Home Delivery up to 3 KM &bull; Minimum Order ₹300</span>
+      </div>
+      <div class="flex items-center gap-3 text-dark-muted">
+        <span class="flex items-center gap-1">
+          <span class="w-2 h-2 rounded-full bg-green-fresh"></span>
+          <span>Fresh Ingredients</span>
+        </span>
+        <a id="bannerPhoneLink" href="tel:+918728867122" class="text-burgundy font-bold hover:underline">+91 87288 67122</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN WRAPPER -->
+  <main class="max-w-4xl mx-auto w-full px-4 pt-3 flex-1">
+
+    <!-- VEG / NON-VEG FILTER & VIEW CONTROLS -->
+    <div class="flex items-center justify-between gap-2 py-2 mb-2">
+      <div class="flex items-center gap-1.5 p-1 bg-white rounded-xl border border-dark-border/80 shadow-sm text-xs font-semibold">
+        <button onclick="setVegFilter('all')" id="filterAllBtn" class="px-3 py-1.5 rounded-lg transition-all bg-burgundy text-white shadow-xs">
+          All Menu
+        </button>
+        <button onclick="setVegFilter('veg')" id="filterVegBtn" class="flex items-center gap-1 px-3 py-1.5 rounded-lg transition-all text-dark hover:bg-cream">
+          <span class="veg-symbol"></span>
+          <span>Veg Only</span>
+        </button>
+        <button onclick="setVegFilter('non_veg')" id="filterNonVegBtn" class="flex items-center gap-1 px-3 py-1.5 rounded-lg transition-all text-dark hover:bg-cream">
+          <span class="non-veg-symbol"></span>
+          <span>Non-Veg</span>
+        </button>
+      </div>
+
+      <div class="text-xs text-dark-muted font-medium hidden sm:block">
+        <span id="totalItemsCount">0</span> delicious items
+      </div>
+    </div>
+
+    <!-- HORIZONTAL CATEGORY NAVIGATION BAR (STICKY) -->
+    <nav class="sticky top-[58px] z-30 -mx-4 px-4 py-2 bg-cream/95 backdrop-blur-md border-b border-dark-border/60 mb-4">
+      <div id="categoryPillBar" class="flex items-center gap-2 overflow-x-auto scrollbar-none py-1">
+        <!-- Rendered dynamically -->
+      </div>
+    </nav>
+
+    <!-- MENU SECTIONS CONTAINER -->
+    <div id="menuContainer" class="space-y-8">
+      <!-- Loading Skeleton State -->
+      <div id="menuLoading" class="py-12 text-center text-dark-muted">
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-burgundy border-t-transparent mb-3"></div>
+        <p class="font-medium text-sm">Loading Double Deezz Artisanal Menu...</p>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- STICKY BOTTOM CART BAR (MOBILE-FIRST) -->
+  <div id="floatingCartBar" class="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-dark-border/80 shadow-cart p-3 transition-transform duration-300 transform translate-y-full">
+    <div class="max-w-4xl mx-auto flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-burgundy/10 text-burgundy flex items-center justify-center font-bold relative">
+          <span class="material-symbols-outlined text-[22px]">shopping_bag</span>
+          <span id="floatCartBadge" class="absolute -top-1 -right-1 bg-burgundy text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-extrabold shadow">0</span>
+        </div>
+        <div>
+          <div class="text-xs text-dark-muted font-medium"><span id="floatItemCount">0 Items</span> added</div>
+          <div class="font-title font-bold text-lg text-burgundy leading-tight" id="floatCartTotal">₹0</div>
+        </div>
+      </div>
+
+      <button onclick="openCartModal()" class="flex items-center gap-2 bg-green-fresh hover:bg-green-dark text-white font-bold text-sm px-6 py-2.5 rounded-xl shadow-md transition-all active:scale-95">
+        <span>View Tray &bull; Checkout</span>
+        <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ITEM CUSTOMIZATION MODAL (Pizza Sizes, Toppings & Addons) -->
+  <div id="customModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center modal-backdrop hidden">
+    <div class="bg-white rounded-t-3xl sm:rounded-2xl max-w-lg w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in slide-in-from-bottom">
+      
+      <!-- Modal Header -->
+      <div class="p-4 bg-burgundy text-white flex items-center justify-between shrink-0">
+        <div>
+          <div class="flex items-center gap-1.5 mb-1">
+            <span id="modalVegBadge"></span>
+            <h3 id="modalItemTitle" class="font-title font-bold text-base md:text-lg">Customize Dish</h3>
+          </div>
+          <p id="modalItemDesc" class="text-xs text-cream/80 line-clamp-1"></p>
+        </div>
+        <button onclick="closeCustomModal()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <div class="p-4 overflow-y-auto space-y-5 flex-1">
+        
+        <!-- Pizza Size Selector (If pizza/variants) -->
+        <div id="variantSection" class="hidden">
+          <label class="block text-xs font-bold text-burgundy uppercase tracking-wider mb-2">Select Pizza Size *</label>
+          <div id="variantOptionsContainer" class="grid grid-cols-3 gap-2">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+
+        <!-- Add-ons Selector (Cheese burst, extra toppings, dips, paneer slice) -->
+        <div id="addonsSection" class="hidden">
+          <label class="block text-xs font-bold text-burgundy uppercase tracking-wider mb-2">Choose Add-ons</label>
+          <div id="addonsContainer" class="space-y-2">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+
+        <!-- Quantity Stepper -->
+        <div class="flex items-center justify-between pt-2 border-t border-dark-border/60">
+          <span class="text-xs font-bold text-dark">Quantity:</span>
+          <div class="flex items-center gap-3 bg-cream px-3 py-1.5 rounded-xl border border-dark-border">
+            <button onclick="changeModalQty(-1)" class="w-7 h-7 rounded-lg bg-white flex items-center justify-center text-dark font-bold hover:bg-gray-100 active:scale-95 shadow-xs">-</button>
+            <span id="modalQtyDisplay" class="font-bold text-sm w-5 text-center">1</span>
+            <button onclick="changeModalQty(1)" class="w-7 h-7 rounded-lg bg-white flex items-center justify-center text-dark font-bold hover:bg-gray-100 active:scale-95 shadow-xs">+</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-4 bg-cream/70 border-t border-dark-border flex items-center justify-between shrink-0">
+        <div>
+          <span class="text-[11px] text-dark-muted font-medium">Item Total:</span>
+          <div id="modalPriceDisplay" class="font-title font-bold text-xl text-burgundy">₹0</div>
+        </div>
+        <button id="modalAddToCartBtn" onclick="confirmModalAddToCart()" class="bg-green-fresh hover:bg-green-dark text-white font-bold text-sm px-6 py-2.5 rounded-xl shadow-md transition-all active:scale-95 flex items-center gap-1.5">
+          <span class="material-symbols-outlined text-[18px]">add_shopping_cart</span>
+          <span>Add to Tray</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CART / CHECKOUT MODAL (SLIDE-UP SHEET) -->
+  <div id="cartModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center modal-backdrop hidden">
+    <div class="bg-white rounded-t-3xl sm:rounded-2xl max-w-lg w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
+      
+      <!-- Cart Header -->
+      <div class="p-4 bg-burgundy text-white flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-[20px] text-cream">restaurant_menu</span>
+          <div>
+            <h3 class="font-title font-bold text-base">Your Dining Tray</h3>
+            <p class="text-[11px] text-cream/80">Double Deezz The Food Cafe</p>
+          </div>
+        </div>
+        <button onclick="closeCartModal()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+      </div>
+
+      <!-- Cart Scrollable Content -->
+      <div class="p-4 overflow-y-auto space-y-4 flex-1">
+        
+        <!-- Cart Items List -->
+        <div id="cartItemsList" class="divide-y divide-dark-border/60">
+          <!-- Dynamically populated -->
+        </div>
+
+        <!-- Empty Cart State -->
+        <div id="cartEmptyState" class="hidden py-10 text-center text-dark-muted">
+          <span class="material-symbols-outlined text-4xl text-dark-muted/60 mb-2">shopping_basket</span>
+          <p class="font-medium text-sm">Your tray is empty!</p>
+          <p class="text-xs text-dark-muted mt-1">Explore our artisanal menu and add your favorite dishes.</p>
+        </div>
+
+        <!-- Delivery / Dining Selection -->
+        <div id="checkoutDetailsSection" class="space-y-4 pt-2">
+          
+          <div class="bg-cream-card p-3 rounded-xl border border-dark-border">
+            <label class="block text-xs font-bold text-burgundy uppercase tracking-wider mb-2">Select Order Type</label>
+            <div class="grid grid-cols-2 gap-2 text-xs font-bold">
+              <label class="flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer transition-all bg-white border-green-fresh text-green-fresh shadow-xs" id="optDeliveryLabel">
+                <input type="radio" name="orderType" value="Delivery" checked onchange="toggleOrderType('Delivery')" class="accent-green-fresh">
+                <span>🛵 Home Delivery</span>
+              </label>
+              <label class="flex items-center gap-2 p-2.5 rounded-lg border border-dark-border/80 cursor-pointer transition-all bg-white text-dark hover:bg-gray-50" id="optDineInLabel">
+                <input type="radio" name="orderType" value="Dine-in / Takeaway" onchange="toggleOrderType('Dine-in / Takeaway')" class="accent-burgundy">
+                <span>🍽️ Dine-in / Takeaway</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Free Delivery Progress Alert -->
+          <div id="deliveryNoticeBanner" class="p-2.5 rounded-xl text-xs flex items-center gap-2 bg-green-soft text-green-dark border border-green-fresh/30">
+            <span class="material-symbols-outlined text-[18px] text-green-fresh">check_circle</span>
+            <span id="deliveryNoticeText">Free delivery applicable up to 3 KM (Min order ₹300).</span>
+          </div>
+
+          <!-- Customer Input Form -->
+          <div class="space-y-2.5 bg-white p-3 rounded-xl border border-dark-border">
+            <label class="block text-xs font-bold text-burgundy uppercase tracking-wider">Customer Details</label>
+            <div>
+              <input id="custName" type="text" placeholder="Your Full Name *" class="w-full text-xs p-2.5 rounded-lg border border-dark-border focus:ring-1 focus:ring-burgundy focus:outline-none">
+            </div>
+            <div>
+              <input id="custPhone" type="tel" placeholder="Mobile / WhatsApp Number *" class="w-full text-xs p-2.5 rounded-lg border border-dark-border focus:ring-1 focus:ring-burgundy focus:outline-none">
+            </div>
+            <div id="addressFieldGroup">
+              <textarea id="custAddress" rows="2" placeholder="Complete Delivery Address & Landmark *" class="w-full text-xs p-2.5 rounded-lg border border-dark-border focus:ring-1 focus:ring-burgundy focus:outline-none"></textarea>
+            </div>
+            <div>
+              <input id="custNotes" type="text" placeholder="Special Cooking Instructions (optional)" class="w-full text-xs p-2.5 rounded-lg border border-dark-border focus:ring-1 focus:ring-burgundy focus:outline-none">
+            </div>
+          </div>
+
+          <!-- Price Breakdown Summary -->
+          <div class="bg-cream p-3 rounded-xl border border-dark-border space-y-1.5 text-xs">
+            <div class="flex justify-between text-dark">
+              <span>Subtotal:</span>
+              <span id="summarySubtotal" class="font-bold">₹0</span>
+            </div>
+            <div class="flex justify-between text-dark">
+              <span>Delivery Charge:</span>
+              <span id="summaryDelivery" class="font-bold text-green-fresh">FREE</span>
+            </div>
+            <div class="border-t border-dark-border pt-1.5 flex justify-between text-sm font-bold text-burgundy">
+              <span>Total Amount:</span>
+              <span id="summaryTotal" class="font-title text-base">₹0</span>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Cart Action Footer -->
+      <div id="cartActionFooter" class="p-4 bg-cream/70 border-t border-dark-border flex flex-col gap-2 shrink-0">
+        <button onclick="handlePlaceWhatsAppOrder()" class="w-full py-3 px-4 rounded-xl bg-green-fresh hover:bg-green-dark text-white font-bold text-sm shadow-md flex items-center justify-center gap-2 active:scale-95 transition-all">
+          <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.275.072.376-.044c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.086s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.099.824zm-3.423-14.416c-6.627 0-12 5.373-12 12 0 2.159.57 4.184 1.564 5.941l-1.637 5.979 6.136-1.61c1.704.933 3.659 1.464 5.74 1.464 6.627 0 12-5.373 12-12 0-6.627-5.373-12-12-12z"/></svg>
+          <span>Send Order on WhatsApp</span>
+        </button>
+        <p class="text-[10px] text-center text-dark-muted">
+          Your order will be verified directly by Double Deezz The Food Cafe.
+        </p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="mt-12 bg-burgundy text-cream pt-8 pb-16 border-t border-burgundy-light">
+    <div class="max-w-4xl mx-auto px-4 space-y-6">
+      
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-white/10 pb-6">
+        <div>
+          <h2 class="font-title font-bold text-xl text-white">DOUBLE DEEZZ THE FOOD CAFE</h2>
+          <p class="text-xs text-cream/80 mt-1">Artisanal Live Burgers, Pizzas, Mojitos, Wraps &amp; More.</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <a id="footerCallPrimary" href="tel:+918728867122" class="px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white transition-all flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-[16px]">call</span>
+            <span>+91 87288 67122</span>
+          </a>
+          <a id="footerCallAlt" href="tel:+919855381984" class="px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white transition-all flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-[16px]">call</span>
+            <span>+91 98553 81984</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 text-xs text-cream/70">
+        <div>
+          <h4 class="font-bold text-white uppercase tracking-wider mb-2">Our Policy</h4>
+          <p>• 100% Real Fresh Ingredients</p>
+          <p>• Pure Veg &amp; Non-Veg Segregated Preparation</p>
+          <p>• Free Home Delivery up to 3 KM (Min ₹300)</p>
+        </div>
+        <div>
+          <h4 class="font-bold text-white uppercase tracking-wider mb-2">Location &amp; Hours</h4>
+          <p>Double Deezz The Food Cafe</p>
+          <p>Phagwara, Punjab</p>
+          <p>Open Daily: 11:00 AM - 11:00 PM</p>
+        </div>
+        <div>
+          <h4 class="font-bold text-white uppercase tracking-wider mb-2">Cafe Management</h4>
+          <a href="./admin.html" class="inline-flex items-center gap-1.5 text-white bg-white/15 px-3 py-1.5 rounded-lg hover:bg-white/25 transition-all font-semibold">
+            <span class="material-symbols-outlined text-[15px]">lock</span>
+            <span>Admin Dashboard</span>
+          </a>
+          <p class="text-[11px] text-cream/50 mt-2">Manage menu, prices, WhatsApp number &amp; live orders.</p>
+        </div>
+      </div>
+
+      <div class="text-center pt-4 text-[11px] text-cream/50 border-t border-white/10">
+        &copy; <span id="currentYear"></span> Double Deezz The Food Cafe. All rights reserved.
+      </div>
+    </div>
+  </footer>
+
+  <!-- CORE APPLICATION LOGIC -->
+  <script>
+    // State Management
+    let MENU_DATA = null;
+    let RESTAURANT_SETTINGS = {
+      name: "Double Deezz The Food Cafe",
+      phone: "+91 87288 67122",
+      whatsapp: "918728867122",
+      altPhone: "+91 98553 81984",
+      minOrderAmount: 300,
+      freeDeliveryRadiusKm: 3,
+      baseDeliveryCharge: 0,
+      deliveryPolicy: "Free home delivery up to 3 KM • Minimum order ₹300"
+    };
+
+    let CART = JSON.parse(localStorage.getItem('doubledeezz_cart') || '[]');
+    let currentVegFilter = 'all'; // 'all', 'veg', 'non_veg'
+    let currentSearchTerm = '';
+    let activeCustomItem = null;
+    let customSelectedVariant = null;
+    let customSelectedAddons = [];
+    let customQty = 1;
+
+    // Helper: Format Currency
+    function formatPrice(num) {
+      return '₹' + Number(num || 0).toLocaleString('en-IN');
+    }
+
+    // Save Cart
+    function persistCart() {
+      localStorage.setItem('doubledeezz_cart', JSON.stringify(CART));
+      updateCartUI();
+    }
+
+    // Update Header and Floating Cart Count / Amounts
+    function updateCartUI() {
+      const totalCount = CART.reduce((sum, item) => sum + (Number(item.qty) || 1), 0);
+      const subtotal = CART.reduce((sum, item) => sum + ((Number(item.price) || 0) * (Number(item.qty) || 1)), 0);
+
+      const headerCountEl = document.getElementById('headerCartCount');
+      if (headerCountEl) headerCountEl.textContent = totalCount;
+
+      const floatBadge = document.getElementById('floatCartBadge');
+      if (floatBadge) floatBadge.textContent = totalCount;
+
+      const floatCount = document.getElementById('floatItemCount');
+      if (floatCount) floatCount.textContent = `${totalCount} Item${totalCount === 1 ? '' : 's'}`;
+
+      const floatTotal = document.getElementById('floatCartTotal');
+      if (floatTotal) floatTotal.textContent = formatPrice(subtotal);
+
+      const floatingBar = document.getElementById('floatingCartBar');
+      if (floatingBar) {
+        if (totalCount > 0) {
+          floatingBar.classList.remove('translate-y-full');
+        } else {
+          floatingBar.classList.add('translate-y-full');
+        }
+      }
+
+      renderCartItems();
+    }
+
+    // Set Veg / Non-Veg Filter
+    function setVegFilter(filter) {
+      currentVegFilter = filter;
+      document.getElementById('filterAllBtn').className = (filter === 'all')
+        ? 'px-3 py-1.5 rounded-lg transition-all bg-burgundy text-white shadow-xs'
+        : 'px-3 py-1.5 rounded-lg transition-all text-dark hover:bg-cream';
+
+      document.getElementById('filterVegBtn').className = (filter === 'veg')
+        ? 'flex items-center gap-1 px-3 py-1.5 rounded-lg transition-all bg-green-fresh text-white shadow-xs'
+        : 'flex items-center gap-1 px-3 py-1.5 rounded-lg transition-all text-dark hover:bg-cream';
+
+      document.getElementById('filterNonVegBtn').className = (filter === 'non_veg')
+        ? 'flex items-center gap-1 px-3 py-1.5 rounded-lg transition-all bg-burgundy text-white shadow-xs'
+        : 'flex items-center gap-1 px-3 py-1.5 rounded-lg transition-all text-dark hover:bg-cream';
+
+      renderMenu();
+    }
+
+    // Search Functions
+    function toggleSearch() {
+      const container = document.getElementById('searchContainer');
+      container.classList.toggle('hidden');
+      if (!container.classList.contains('hidden')) {
+        document.getElementById('searchInput').focus();
+      }
+    }
+
+    function clearSearch() {
+      document.getElementById('searchInput').value = '';
+      currentSearchTerm = '';
+      renderMenu();
+    }
+
+    function handleSearch(val) {
+      currentSearchTerm = (val || '').toLowerCase().trim();
+      renderMenu();
+    }
+
+    // Synchronize UI with Restaurant Settings
+    function applySettings(settings) {
+      if (!settings) return;
+      RESTAURANT_SETTINGS = { ...RESTAURANT_SETTINGS, ...settings };
+      
+      const phoneClean = RESTAURANT_SETTINGS.phone || '+91 87288 67122';
+      const phoneDigits = phoneClean.replace(/[^0-9]/g, '');
+
+      // Header button
+      const hCall = document.getElementById('headerCallBtn');
+      if (hCall) hCall.href = `tel:${phoneClean}`;
+
+      // Banner policy & link
+      const bPolicy = document.getElementById('bannerDeliveryPolicy');
+      if (bPolicy && RESTAURANT_SETTINGS.deliveryPolicy) {
+        bPolicy.textContent = RESTAURANT_SETTINGS.deliveryPolicy;
+      }
+      const bPhone = document.getElementById('bannerPhoneLink');
+      if (bPhone) {
+        bPhone.href = `tel:${phoneClean}`;
+        bPhone.textContent = phoneClean;
+      }
+
+      // Footers
+      const fCall1 = document.getElementById('footerCallPrimary');
+      if (fCall1) {
+        fCall1.href = `tel:${phoneClean}`;
+        fCall1.querySelector('span:last-child').textContent = phoneClean;
+      }
+      const fCall2 = document.getElementById('footerCallAlt');
+      if (fCall2 && RESTAURANT_SETTINGS.altPhone) {
+        fCall2.href = `tel:${RESTAURANT_SETTINGS.altPhone}`;
+        fCall2.querySelector('span:last-child').textContent = RESTAURANT_SETTINGS.altPhone;
+      }
+    }
+
+    // Render Category Pills
+    function renderCategoryPills() {
+      const container = document.getElementById('categoryPillBar');
+      if (!container || !MENU_DATA || !MENU_DATA._categories) return;
+
+      const categories = MENU_DATA._categories;
+      let html = '';
+
+      categories.forEach((cat, idx) => {
+        const catItems = MENU_DATA[cat.id] || [];
+        if (catItems.length === 0) return;
+
+        html += `
+          <a href="#cat_${cat.id}" onclick="highlightCategoryPill(this)" class="category-pill shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all border border-dark-border/80 bg-white text-dark hover:border-burgundy/60 ${idx === 0 ? 'pill-active' : ''}">
+            <span>${cat.emoji || '🍴'}</span>
+            <span>${cat.name}</span>
+          </a>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    function highlightCategoryPill(element) {
+      document.querySelectorAll('.category-pill').forEach(el => el.classList.remove('pill-active'));
+      if (element) element.classList.add('pill-active');
+    }
+
+    // Render All Menu Sections
+    function renderMenu() {
+      const container = document.getElementById('menuContainer');
+      if (!container || !MENU_DATA) return;
+
+      const categories = MENU_DATA._categories || [];
+      let totalDishesCount = 0;
+      let sectionsHtml = '';
+
+      categories.forEach(cat => {
+        let items = MENU_DATA[cat.id] || [];
+
+        // Apply Veg/Non-Veg Filter
+        if (currentVegFilter === 'veg') {
+          items = items.filter(it => it.isVeg === true);
+        } else if (currentVegFilter === 'non_veg') {
+          items = items.filter(it => it.isVeg === false);
+        }
+
+        // Apply Search Filter
+        if (currentSearchTerm) {
+          items = items.filter(it => 
+            (it.name && it.name.toLowerCase().includes(currentSearchTerm)) ||
+            (it.description && it.description.toLowerCase().includes(currentSearchTerm))
+          );
+        }
+
+        if (items.length === 0) return;
+        totalDishesCount += items.length;
+
+        sectionsHtml += `
+          <section id="cat_${cat.id}" class="scroll-mt-24">
+            <!-- Section Header -->
+            <div class="flex items-center gap-2.5 pb-2 mb-3 border-b-2 border-burgundy/15">
+              <span class="text-xl">${cat.emoji || '🍴'}</span>
+              <h2 class="font-title font-bold text-lg md:text-xl text-dark tracking-wide uppercase">${cat.name}</h2>
+              <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-burgundy/10 text-burgundy ml-auto">${items.length} Items</span>
+            </div>
+
+            <!-- Items Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+              ${items.map(item => renderFoodCard(item, cat)).join('')}
+            </div>
+          </section>
+        `;
+      });
+
+      const totalCounterEl = document.getElementById('totalItemsCount');
+      if (totalCounterEl) totalCounterEl.textContent = totalDishesCount;
+
+      if (sectionsHtml === '') {
+        container.innerHTML = `
+          <div class="py-16 text-center text-dark-muted">
+            <span class="material-symbols-outlined text-4xl mb-2 text-dark-muted/60">search_off</span>
+            <p class="font-bold text-base text-dark">No dishes match your filter.</p>
+            <p class="text-xs text-dark-muted mt-1">Try resetting the filter or searching for another dish.</p>
+            <button onclick="setVegFilter('all'); clearSearch();" class="mt-4 px-4 py-2 bg-burgundy text-white rounded-xl text-xs font-bold shadow-sm">
+              View All Dishes
+            </button>
+          </div>
+        `;
+      } else {
+        container.innerHTML = sectionsHtml;
+      }
+    }
+
+    // Render Individual Food Card
+    function renderFoodCard(item, cat) {
+      const isUnavailable = item.status === 'unavailable';
+      const hasVariants = Array.isArray(item.variants) && item.variants.length > 0;
+      
+      let priceDisplay = '';
+      if (hasVariants) {
+        // e.g. Pizza S / M / L
+        priceDisplay = `
+          <div class="flex items-center gap-1.5 flex-wrap">
+            ${item.variants.map(v => `
+              <span class="text-[11px] bg-cream px-2 py-0.5 rounded border border-dark-border text-dark font-semibold">
+                ${v.label[0]}: <span class="font-bold text-burgundy">₹${v.price}</span>
+              </span>
+            `).join('')}
+          </div>
+        `;
+      } else {
+        priceDisplay = `<span class="font-title font-bold text-base text-burgundy">₹${item.price}</span>`;
+      }
+
+      // Check if in cart
+      const cartMatches = CART.filter(c => c.id === item.id || (c.name === item.name && c.category === cat.id));
+      const inCartQty = cartMatches.reduce((s, c) => s + (Number(c.qty) || 1), 0);
+
+      return `
+        <div class="bg-white rounded-2xl p-3.5 border border-dark-border/80 shadow-card hover:shadow-soft transition-all flex flex-col justify-between gap-3 relative ${isUnavailable ? 'opacity-60 grayscale' : ''}">
+          
+          <div class="flex items-start justify-between gap-2.5">
+            <div class="flex-1">
+              <!-- Veg / Non-Veg Indicator & Category Badge -->
+              <div class="flex items-center gap-2 mb-1.5">
+                <span class="${item.isVeg ? 'veg-symbol' : 'non-veg-symbol'}" title="${item.isVeg ? 'Vegetarian' : 'Non-Vegetarian'}"></span>
+                <span class="text-[10px] uppercase font-bold tracking-wider ${item.isVeg ? 'text-green-fresh' : 'text-burgundy'}">
+                  ${item.isVeg ? 'Veg' : 'Non-Veg'}
+                </span>
+                ${isUnavailable ? '<span class="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.2 rounded font-bold">Sold Out</span>' : ''}
+              </div>
+
+              <!-- Dish Name -->
+              <h3 class="font-bold text-sm text-dark leading-tight">${item.name}</h3>
+
+              <!-- Dish Description -->
+              <p class="text-xs text-dark-muted line-clamp-2 mt-1 leading-relaxed">${item.description || ''}</p>
+            </div>
+          </div>
+
+          <!-- Bottom Price and Action Row -->
+          <div class="flex items-center justify-between gap-2 pt-2 border-t border-dark-border/50">
+            <div>${priceDisplay}</div>
+
+            <div>
+              ${isUnavailable ? `
+                <button disabled class="text-xs bg-gray-100 text-gray-400 font-bold px-3 py-1.5 rounded-xl cursor-not-allowed">
+                  Unavailable
+                </button>
+              ` : `
+                <button onclick="handleDishClick('${cat.id}', '${item.id || item.name}')" class="flex items-center gap-1 bg-burgundy hover:bg-burgundy-light text-white text-xs font-bold px-3.5 py-1.5 rounded-xl shadow-xs transition-transform active:scale-95">
+                  <span class="material-symbols-outlined text-[15px]">add</span>
+                  <span>${hasVariants ? 'Select Size' : (inCartQty > 0 ? `Add (${inCartQty})` : 'Add')}</span>
+                </button>
+              `}
+            </div>
+          </div>
+
+        </div>
+      `;
+    }
+
+    // Dish Click Handler: Open Customization / Size Selector Modal or Direct Add
+    function handleDishClick(catId, itemIdentifier) {
+      const catItems = MENU_DATA[catId] || [];
+      const item = catItems.find(it => it.id === itemIdentifier || it.name === itemIdentifier);
+      if (!item || item.status === 'unavailable') return;
+
+      activeCustomItem = { ...item, category: catId };
+      customQty = 1;
+      customSelectedAddons = [];
+
+      // Check if item has size variants or applicable addons
+      const hasVariants = Array.isArray(item.variants) && item.variants.length > 0;
+      const allAddons = MENU_DATA._addons || [];
+      const applicableAddons = allAddons.filter(a => {
+        if (!a.enabled) return false;
+        // Never allow Cheese Slice!
+        if (a.id === 'extra_cheese_slice' || (a.name && a.name.toLowerCase() === 'cheese slice')) return false;
+        if (a.appliesTo === 'all') return true;
+        if (Array.isArray(a.appliesTo) && a.appliesTo.includes(catId)) return true;
+        return false;
+      });
+
+      if (hasVariants || applicableAddons.length > 0) {
+        // Open Customization Modal
+        openCustomModal(item, catId, hasVariants, applicableAddons);
+      } else {
+        // Direct Add to Cart
+        addItemToCart({
+          id: item.id || 'it_' + Date.now(),
+          name: item.name,
+          category: catId,
+          price: item.price,
+          isVeg: item.isVeg,
+          variantLabel: '',
+          addons: [],
+          qty: 1
+        });
+      }
+    }
+
+    // Open Customization Modal
+    function openCustomModal(item, catId, hasVariants, applicableAddons) {
+      const modal = document.getElementById('customModal');
+      document.getElementById('modalItemTitle').textContent = item.name;
+      document.getElementById('modalItemDesc').textContent = item.description || '';
+      
+      const vegBadge = document.getElementById('modalVegBadge');
+      vegBadge.className = item.isVeg ? 'veg-symbol' : 'non-veg-symbol';
+
+      // Variant Selector (Pizzas, etc.)
+      const variantSec = document.getElementById('variantSection');
+      const variantContainer = document.getElementById('variantOptionsContainer');
+      if (hasVariants) {
+        variantSec.classList.remove('hidden');
+        customSelectedVariant = item.variants[0]; // Default to Small
+        
+        variantContainer.innerHTML = item.variants.map((v, i) => `
+          <button type="button" onclick="selectModalVariant('${v.label}', ${v.price})" id="varBtn_${v.label}" class="variant-pill p-2 rounded-xl border text-center transition-all ${i === 0 ? 'border-burgundy bg-burgundy/10 text-burgundy font-bold shadow-xs' : 'border-dark-border text-dark'}">
+            <div class="text-xs font-semibold">${v.label}</div>
+            <div class="font-bold text-sm text-burgundy mt-0.5">₹${v.price}</div>
+          </button>
+        `).join('');
+      } else {
+        variantSec.classList.add('hidden');
+        customSelectedVariant = null;
+      }
+
+      // Addons Selector
+      const addonsSec = document.getElementById('addonsSection');
+      const addonsContainer = document.getElementById('addonsContainer');
+      if (applicableAddons.length > 0) {
+        addonsSec.classList.remove('hidden');
+        addonsContainer.innerHTML = applicableAddons.map(a => {
+          let priceLabel = '';
+          if (a.sizePricing) {
+            priceLabel = `S: ₹${a.sizePricing.Small} | M: ₹${a.sizePricing.Medium} | L: ₹${a.sizePricing.Large}`;
+          } else {
+            priceLabel = `+₹${a.price}`;
+          }
+
+          return `
+            <label class="flex items-center justify-between p-2.5 rounded-xl border border-dark-border hover:bg-cream/50 cursor-pointer transition-all">
+              <div class="flex items-center gap-2">
+                <input type="checkbox" onchange="toggleModalAddon('${a.id}')" id="addonCb_${a.id}" class="accent-burgundy w-4 h-4 rounded">
+                <span class="text-xs font-semibold text-dark">${a.name}</span>
+              </div>
+              <span class="text-xs font-bold text-burgundy">${priceLabel}</span>
+            </label>
+          `;
+        }).join('');
+      } else {
+        addonsSec.classList.add('hidden');
+      }
+
+      updateModalPrice();
+      modal.classList.remove('hidden');
+    }
+
+    function closeCustomModal() {
+      document.getElementById('customModal').classList.add('hidden');
+      activeCustomItem = null;
+    }
+
+    function selectModalVariant(label, price) {
+      if (!activeCustomItem || !activeCustomItem.variants) return;
+      customSelectedVariant = activeCustomItem.variants.find(v => v.label === label);
+
+      document.querySelectorAll('.variant-pill').forEach(el => {
+        el.className = 'variant-pill p-2 rounded-xl border text-center transition-all border-dark-border text-dark';
+      });
+      const selectedBtn = document.getElementById('varBtn_' + label);
+      if (selectedBtn) {
+        selectedBtn.className = 'variant-pill p-2 rounded-xl border text-center transition-all border-burgundy bg-burgundy/10 text-burgundy font-bold shadow-xs';
+      }
+
+      updateModalPrice();
+    }
+
+    function toggleModalAddon(addonId) {
+      const cb = document.getElementById('addonCb_' + addonId);
+      const allAddons = MENU_DATA._addons || [];
+      const addon = allAddons.find(a => a.id === addonId);
+      if (!addon) return;
+
+      if (cb && cb.checked) {
+        if (!customSelectedAddons.some(a => a.id === addonId)) {
+          customSelectedAddons.push(addon);
+        }
+      } else {
+        customSelectedAddons = customSelectedAddons.filter(a => a.id !== addonId);
+      }
+
+      updateModalPrice();
+    }
+
+    function changeModalQty(delta) {
+      customQty = Math.max(1, customQty + delta);
+      document.getElementById('modalQtyDisplay').textContent = customQty;
+      updateModalPrice();
+    }
+
+    function calculateModalUnitPrice() {
+      if (!activeCustomItem) return 0;
+      let unitPrice = customSelectedVariant ? customSelectedVariant.price : (activeCustomItem.price || 0);
+
+      customSelectedAddons.forEach(a => {
+        if (a.sizePricing && customSelectedVariant) {
+          unitPrice += (a.sizePricing[customSelectedVariant.label] || 0);
+        } else {
+          unitPrice += (a.price || 0);
+        }
+      });
+
+      return unitPrice;
+    }
+
+    function updateModalPrice() {
+      const unit = calculateModalUnitPrice();
+      const total = unit * customQty;
+      document.getElementById('modalPriceDisplay').textContent = formatPrice(total);
+    }
+
+    function confirmModalAddToCart() {
+      if (!activeCustomItem) return;
+
+      const unitPrice = calculateModalUnitPrice();
+      const variantLabel = customSelectedVariant ? customSelectedVariant.label : '';
+      
+      const addonsPayload = customSelectedAddons.map(a => {
+        let p = a.price || 0;
+        if (a.sizePricing && customSelectedVariant) {
+          p = a.sizePricing[customSelectedVariant.label] || 0;
+        }
+        return { id: a.id, name: a.name, price: p, qty: 1 };
+      });
+
+      addItemToCart({
+        id: activeCustomItem.id || 'it_' + Date.now(),
+        name: activeCustomItem.name,
+        category: activeCustomItem.category,
+        price: unitPrice,
+        isVeg: activeCustomItem.isVeg,
+        variantLabel: variantLabel,
+        addons: addonsPayload,
+        qty: customQty
+      });
+
+      closeCustomModal();
+    }
+
+    // Add Item to Cart Engine
+    function addItemToCart(itemObj) {
+      // Create a deterministic hash/key based on name, variant and selected addons
+      const addonsKey = (itemObj.addons || []).map(a => a.id).sort().join('_');
+      const itemKey = `${itemObj.name}__${itemObj.variantLabel}__${addonsKey}`;
+
+      const existing = CART.find(c => c._key === itemKey);
+      if (existing) {
+        existing.qty += (itemObj.qty || 1);
+      } else {
+        CART.push({
+          ...itemObj,
+          _key: itemKey
+        });
+      }
+
+      persistCart();
+    }
+
+    function updateCartItemQty(index, delta) {
+      if (!CART[index]) return;
+      CART[index].qty += delta;
+      if (CART[index].qty <= 0) {
+        CART.splice(index, 1);
+      }
+      persistCart();
+    }
+
+    // Cart Modal View
+    function openCartModal() {
+      document.getElementById('cartModal').classList.remove('hidden');
+      renderCartItems();
+    }
+
+    function closeCartModal() {
+      document.getElementById('cartModal').classList.add('hidden');
+    }
+
+    function toggleOrderType(type) {
+      const isDelivery = type === 'Delivery';
+      const addressGrp = document.getElementById('addressFieldGroup');
+      const delLabel = document.getElementById('optDeliveryLabel');
+      const dineLabel = document.getElementById('optDineInLabel');
+
+      if (isDelivery) {
+        addressGrp.classList.remove('hidden');
+        delLabel.className = 'flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer transition-all bg-white border-green-fresh text-green-fresh shadow-xs';
+        dineLabel.className = 'flex items-center gap-2 p-2.5 rounded-lg border border-dark-border/80 cursor-pointer transition-all bg-white text-dark hover:bg-gray-50';
+      } else {
+        addressGrp.classList.add('hidden');
+        delLabel.className = 'flex items-center gap-2 p-2.5 rounded-lg border border-dark-border/80 cursor-pointer transition-all bg-white text-dark hover:bg-gray-50';
+        dineLabel.className = 'flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer transition-all bg-white border-burgundy text-burgundy shadow-xs';
+      }
+
+      renderCartItems();
+    }
+
+    function renderCartItems() {
+      const container = document.getElementById('cartItemsList');
+      const emptyState = document.getElementById('cartEmptyState');
+      const checkoutSec = document.getElementById('checkoutDetailsSection');
+      const actionFooter = document.getElementById('cartActionFooter');
+
+      if (!container) return;
+
+      if (CART.length === 0) {
+        container.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        if (checkoutSec) checkoutSec.classList.add('hidden');
+        if (actionFooter) actionFooter.classList.add('hidden');
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      if (checkoutSec) checkoutSec.classList.remove('hidden');
+      if (actionFooter) actionFooter.classList.remove('hidden');
+
+      let html = '';
+      let subtotal = 0;
+
+      CART.forEach((item, index) => {
+        const itemLineTotal = (Number(item.price) || 0) * (Number(item.qty) || 1);
+        subtotal += itemLineTotal;
+
+        const addonsText = (item.addons && item.addons.length > 0)
+          ? item.addons.map(a => a.name).join(', ')
+          : '';
+
+        html += `
+          <div class="py-3 flex items-center justify-between gap-3">
+            <div class="flex-1">
+              <div class="flex items-center gap-1.5">
+                <span class="${item.isVeg ? 'veg-symbol' : 'non-veg-symbol'}"></span>
+                <span class="font-bold text-xs text-dark">${item.name}</span>
+                ${item.variantLabel ? `<span class="text-[10px] bg-cream px-1.5 py-0.2 rounded border font-semibold text-burgundy">(${item.variantLabel})</span>` : ''}
+              </div>
+              ${addonsText ? `<div class="text-[10px] text-dark-muted mt-0.5">+ ${addonsText}</div>` : ''}
+              <div class="font-bold text-xs text-burgundy mt-1">${formatPrice(item.price)} each</div>
+            </div>
+
+            <!-- Stepper -->
+            <div class="flex items-center gap-2 bg-cream px-2 py-1 rounded-lg border border-dark-border">
+              <button onclick="updateCartItemQty(${index}, -1)" class="w-6 h-6 rounded bg-white font-bold text-xs flex items-center justify-center hover:bg-gray-100 shadow-xs">-</button>
+              <span class="font-bold text-xs w-4 text-center">${item.qty}</span>
+              <button onclick="updateCartItemQty(${index}, 1)" class="w-6 h-6 rounded bg-white font-bold text-xs flex items-center justify-center hover:bg-gray-100 shadow-xs">+</button>
+            </div>
+
+            <!-- Line Total -->
+            <div class="text-right w-16">
+              <div class="font-title font-bold text-xs text-dark">${formatPrice(itemLineTotal)}</div>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+
+      // Pricing computations
+      const isDelivery = document.querySelector('input[name="orderType"]:checked')?.value === 'Delivery';
+      const minOrder = RESTAURANT_SETTINGS.minOrderAmount || 300;
+      let deliveryFee = 0;
+
+      const delNoticeBanner = document.getElementById('deliveryNoticeBanner');
+      const delNoticeText = document.getElementById('deliveryNoticeText');
+
+      if (isDelivery) {
+        if (subtotal >= minOrder) {
+          deliveryFee = 0;
+          if (delNoticeBanner) {
+            delNoticeBanner.className = 'p-2.5 rounded-xl text-xs flex items-center gap-2 bg-green-soft text-green-dark border border-green-fresh/30';
+            delNoticeText.textContent = `🎉 Congratulations! Free home delivery unlocked (up to 3 KM).`;
+          }
+        } else {
+          deliveryFee = 0; // Standard free policy notice
+          const diff = minOrder - subtotal;
+          if (delNoticeBanner) {
+            delNoticeBanner.className = 'p-2.5 rounded-xl text-xs flex items-center gap-2 bg-amber-50 text-amber-900 border border-amber-200';
+            delNoticeText.textContent = `Add ₹${diff} more to reach minimum ₹${minOrder} delivery requirement.`;
+          }
+        }
+      }
+
+      const grandTotal = subtotal + deliveryFee;
+
+      document.getElementById('summarySubtotal').textContent = formatPrice(subtotal);
+      document.getElementById('summaryDelivery').textContent = (deliveryFee === 0) ? 'FREE' : formatPrice(deliveryFee);
+      document.getElementById('summaryTotal').textContent = formatPrice(grandTotal);
+    }
+
+    // Place Order via WhatsApp with EXACT Formatted Text
+    async function handlePlaceWhatsAppOrder() {
+      if (CART.length === 0) {
+        alert('Your cart is empty. Please add items before checking out.');
+        return;
+      }
+
+      const name = (document.getElementById('custName')?.value || '').trim();
+      const phone = (document.getElementById('custPhone')?.value || '').trim();
+      const orderType = document.querySelector('input[name="orderType"]:checked')?.value || 'Delivery';
+      const address = (document.getElementById('custAddress')?.value || '').trim();
+      const notes = (document.getElementById('custNotes')?.value || '').trim();
+
+      if (!name) {
+        alert('Please enter your name.');
+        document.getElementById('custName')?.focus();
+        return;
+      }
+
+      if (!phone || phone.length < 10) {
+        alert('Please enter a valid 10-digit mobile phone number.');
+        document.getElementById('custPhone')?.focus();
+        return;
+      }
+
+      if (orderType === 'Delivery' && !address) {
+        alert('Please provide your complete delivery address and landmark.');
+        document.getElementById('custAddress')?.focus();
+        return;
+      }
+
+      const subtotal = CART.reduce((sum, item) => sum + ((Number(item.price) || 0) * (Number(item.qty) || 1)), 0);
+      const deliveryFee = 0; // Free delivery up to 3 KM
+      const grandTotal = subtotal + deliveryFee;
+
+      // Build Order Items Text
+      let itemsText = '';
+      CART.forEach((item, index) => {
+        itemsText += `${index + 1}. ${item.name}\n`;
+        if (item.variantLabel) {
+          itemsText += `   Size: ${item.variantLabel}\n`;
+        }
+        if (item.addons && item.addons.length > 0) {
+          itemsText += `   Add-ons: ${item.addons.map(a => a.name).join(', ')}\n`;
+        }
+        itemsText += `   Quantity: ${item.qty}\n`;
+        itemsText += `   Price: ₹${item.price * item.qty}\n\n`;
+      });
+
+      // EXACT WhatsApp Message Format Specified in Requirement 6:
+      const waMessage = 
+`Hello Double Deezz The Food Cafe! 👋
+
+I would like to place an order.
+
+Order Details:
+-------------------------
+${itemsText.trim()}
+
+-------------------------
+Subtotal: ₹${subtotal}
+Delivery Charge: ₹${deliveryFee}
+Total Amount: ₹${grandTotal}
+
+Customer Details:
+Name: ${name}
+Phone: ${phone}
+Delivery Address: ${orderType === 'Delivery' ? address : 'Dine-in / Takeaway'}
+Special Instructions: ${notes || 'None'}
+
+Please confirm my order.
+
+Thank you!`;
+
+      // Save Order to Cloud Firestore & Local Server
+      const orderPayload = {
+        customer: { name, phone, address, notes, orderType },
+        items: CART,
+        subtotal,
+        deliveryCharge: deliveryFee,
+        grandTotal,
+        status: 'Pending',
+        timestamp: new Date().toISOString()
+      };
+
+      try {
+        if (window.DoubleDeezzFirebase && window.DoubleDeezzFirebase.saveOrderToCloud) {
+          window.DoubleDeezzFirebase.saveOrderToCloud(orderPayload);
+        }
+      } catch (e) {
+        console.warn('Could not record order to cloud:', e);
+      }
+
+      // WhatsApp Target Number (From settings, default 918728867122)
+      const waNumber = (RESTAURANT_SETTINGS.whatsapp || '918728867122').replace(/[^0-9]/g, '');
+      const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(waMessage)}`;
+
+      // Open WhatsApp in new tab / app
+      window.open(waUrl, '_blank');
+
+      // Clear Cart and Close Modal
+      CART = [];
+      persistCart();
+      closeCartModal();
+      alert('Your order details have been prepared and WhatsApp opened. Please click Send on WhatsApp to finalize confirmation with the cafe!');
+    }
+
+    // Initialize Menu & Cloud Synchronizer
+    function initApplication() {
+      document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+      // Subscribe to Realtime Menu via DoubleDeezzFirebase
+      if (window.DoubleDeezzFirebase && window.DoubleDeezzFirebase.subscribeToMenu) {
+        window.DoubleDeezzFirebase.subscribeToMenu((data, source) => {
+          if (data && data._categories) {
+            MENU_DATA = data;
+            if (data._settings) {
+              applySettings(data._settings);
+            }
+            renderCategoryPills();
+            renderMenu();
+            updateCartUI();
+          }
+        });
+
+        window.DoubleDeezzFirebase.subscribeToSettings((settings) => {
+          if (settings) applySettings(settings);
+        });
+      } else {
+        // Fallback fetch
+        fetch('./menu.json?t=' + Date.now())
+          .then(res => res.json())
+          .then(data => {
+            MENU_DATA = data;
+            if (data._settings) applySettings(data._settings);
+            renderCategoryPills();
+            renderMenu();
+            updateCartUI();
+          })
+          .catch(err => {
+            console.error('Menu load error:', err);
+          });
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', initApplication);
+  </script>
+</body>
+</html>

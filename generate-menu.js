@@ -1,0 +1,475 @@
+const fs = require('fs');
+const path = require('path');
+
+const menuData = {
+  "_settings": {
+    "name": "Double Deezz The Food Cafe",
+    "tagline": "The Food Cafe • Artisanal Burgers, Pizzas, Shakes & More",
+    "phone": "+91 87288 67122",
+    "whatsapp": "918728867122",
+    "altPhone": "+91 98553 81984",
+    "address": "Phagwara, Punjab",
+    "minOrderAmount": 300,
+    "freeDeliveryRadiusKm": 3,
+    "baseDeliveryCharge": 0,
+    "deliveryPolicy": "Free home delivery up to 3 KM. Minimum order ₹300.",
+    "instagram": "doubledeezz_cafe",
+    "currency": "₹"
+  },
+  "_categories": [
+    { "id": "veg_burgers", "name": "Veg Burgers", "emoji": "🍔", "type": "veg" },
+    { "id": "veg_sandwiches", "name": "Veg Sandwiches", "emoji": "🥪", "type": "veg" },
+    { "id": "veg_wraps", "name": "Veg Wraps", "emoji": "🌯", "type": "veg" },
+    { "id": "salads", "name": "Salads", "emoji": "🥗", "type": "mixed" },
+    { "id": "noodles", "name": "Noodles", "emoji": "🥢", "type": "mixed" },
+    { "id": "veg_marine", "name": "Veg Marine", "emoji": "🌮", "type": "veg" },
+    { "id": "mojitos", "name": "Mojitos", "emoji": "🍹", "type": "veg" },
+    { "id": "non_veg_burgers", "name": "Non-Veg Burgers", "emoji": "🍗", "type": "non_veg" },
+    { "id": "non_veg_sandwiches", "name": "Non-Veg Sandwiches", "emoji": "🥪", "type": "non_veg" },
+    { "id": "non_veg_wraps", "name": "Non-Veg Wraps", "emoji": "🌯", "type": "non_veg" },
+    { "id": "fried_items", "name": "Fried Items", "emoji": "🍟", "type": "veg" },
+    { "id": "veg_snacks", "name": "Veg Snacks", "emoji": "🥟", "type": "veg" },
+    { "id": "non_veg_snacks", "name": "Non-Veg Snacks", "emoji": "🍗", "type": "non_veg" },
+    { "id": "extra_dips", "name": "Extra Dips", "emoji": "🥣", "type": "veg" },
+    { "id": "non_veg_marine", "name": "Non-Veg Marine", "emoji": "🌮", "type": "non_veg" },
+    { "id": "veg_pizza", "name": "Veg Pizza", "emoji": "🍕", "type": "veg", "hasSizes": true },
+    { "id": "non_veg_pizza", "name": "Non-Veg Pizza", "emoji": "🍕", "type": "non_veg", "hasSizes": true },
+    { "id": "rice_bowls", "name": "Rice Bowls", "emoji": "🍚", "type": "mixed" },
+    { "id": "veg_pasta", "name": "Veg Pasta", "emoji": "🍝", "type": "veg" },
+    { "id": "non_veg_pasta", "name": "Non-Veg Pasta", "emoji": "🍝", "type": "non_veg" },
+    { "id": "garlic_bread", "name": "Garlic Bread", "emoji": "🥖", "type": "mixed" },
+    { "id": "cheese_chilli", "name": "Cheese Chilli", "emoji": "🌶️", "type": "mixed" }
+  ],
+  "_addons": [
+    {
+      "id": "paneer_slice",
+      "name": "Paneer Slice",
+      "price": 30,
+      "maxQty": 2,
+      "appliesTo": ["veg_burgers", "veg_sandwiches", "veg_wraps", "veg_marine", "non_veg_burgers", "non_veg_sandwiches", "non_veg_wraps", "non_veg_marine"],
+      "enabled": true
+    },
+    {
+      "id": "extra_tikki",
+      "name": "Extra Tikki",
+      "price": 20,
+      "maxQty": 2,
+      "appliesTo": ["veg_burgers", "non_veg_burgers"],
+      "enabled": true
+    },
+    {
+      "id": "mayo_dip",
+      "name": "Mayo Dip",
+      "price": 10,
+      "maxQty": 3,
+      "appliesTo": "all",
+      "enabled": true
+    },
+    {
+      "id": "any_other_dip",
+      "name": "Any Other Dip",
+      "price": 20,
+      "maxQty": 3,
+      "appliesTo": "all",
+      "enabled": true
+    },
+    {
+      "id": "pizza_cheese_burst",
+      "name": "Cheese Burst Topping",
+      "sizePricing": { "Small": 40, "Medium": 80, "Large": 100 },
+      "appliesTo": ["veg_pizza", "non_veg_pizza"],
+      "enabled": true
+    },
+    {
+      "id": "pizza_extra_topping",
+      "name": "Extra Topping",
+      "sizePricing": { "Small": 30, "Medium": 50, "Large": 70 },
+      "appliesTo": ["veg_pizza", "non_veg_pizza"],
+      "enabled": true
+    }
+  ],
+  "veg_burgers": [
+    { "id": "vb_1", "name": "Noodle Burger", "price": 40, "isVeg": true, "status": "available", "description": "Crispy seasoned patty topped with spicy stir-fried noodles." },
+    { "id": "vb_2", "name": "Aloo Tikki Burger", "price": 40, "isVeg": true, "status": "available", "description": "Golden spiced potato tikki with house mint-mayo sauce." },
+    { "id": "vb_3", "name": "Corn Burger", "price": 50, "isVeg": true, "status": "available", "description": "Juicy sweet corn and herb patty with fresh greens." },
+    { "id": "vb_4", "name": "Mushroom Burger", "price": 50, "isVeg": true, "status": "available", "description": "Sautéed savory button mushrooms with aromatic seasonings." },
+    { "id": "vb_5", "name": "Hot Spicy Burger", "price": 50, "isVeg": true, "status": "available", "description": "Fiery chili glaze, crunchy patty, and sliced jalapeño peppers." },
+    { "id": "vb_6", "name": "Veggie Decker Burger", "price": 60, "isVeg": true, "status": "available", "description": "Layered garden vegetables with double dressing on toasted bun." },
+    { "id": "vb_7", "name": "Double Tikki Burger", "price": 80, "isVeg": true, "status": "available", "description": "Two hearty spiced potato patties for double the crunch." },
+    { "id": "vb_8", "name": "Spicy Paneer Burger", "price": 100, "isVeg": true, "status": "available", "description": "Thick slice of marinated tandoori paneer with signature sauce." }
+  ],
+  "veg_sandwiches": [
+    { "id": "vs_1", "name": "Grilled Sandwich", "price": 80, "isVeg": true, "status": "available", "description": "Crispy toasted bread stuffed with seasoned veggies and herbs." },
+    { "id": "vs_2", "name": "Paneer Sandwich", "price": 100, "isVeg": true, "status": "available", "description": "Succulent spiced paneer cubes tossed in creamy spread." },
+    { "id": "vs_3", "name": "Mushroom Sandwich", "price": 100, "isVeg": true, "status": "available", "description": "Garlic sautéed button mushrooms tucked in golden grilled bread." },
+    { "id": "vs_4", "name": "Corn Sandwich", "price": 100, "isVeg": true, "status": "available", "description": "Sweet golden corn kernels layered with butter and light spices." },
+    { "id": "vs_5", "name": "Cheese Baked Sandwich", "price": 100, "isVeg": true, "status": "available", "description": "Oven baked golden sandwich crowned with molten melted cheese." },
+    { "id": "vs_6", "name": "Double Deezz Special Sandwich", "price": 150, "isVeg": true, "status": "available", "description": "Chef's 3-layer masterpiece with paneer, corn, mushrooms and loaded cheese." }
+  ],
+  "veg_wraps": [
+    { "id": "vw_1", "name": "Veg Wrap", "price": 80, "isVeg": true, "status": "available", "description": "Crisp salad greens, crunchy patty strips, and tangy dressing." },
+    { "id": "vw_2", "name": "Corn Wrap", "price": 100, "isVeg": true, "status": "available", "description": "Tender sweet corn and capsicum rolled with savory herb sauce." },
+    { "id": "vw_3", "name": "Mushroom Wrap", "price": 100, "isVeg": true, "status": "available", "description": "Pepper spiced mushrooms wrapped in a warm soft tortilla." },
+    { "id": "vw_4", "name": "Paneer Wrap", "price": 100, "isVeg": true, "status": "available", "description": "Rich cottage cheese strips tossed in tandoori dressing." },
+    { "id": "vw_5", "name": "Classic Veg Wrap", "price": 120, "isVeg": true, "status": "available", "description": "Traditional full-load wrap bursting with paneer, veggies and creamy sauce." }
+  ],
+  "salads": [
+    { "id": "sl_1", "name": "Veg Salad", "price": 100, "isVeg": true, "status": "available", "description": "Crisp cucumber, tomatoes, lettuce, olives tossed in light vinaigrette." },
+    { "id": "sl_2", "name": "Paneer Salad", "price": 120, "isVeg": true, "status": "available", "description": "Fresh cottage cheese cubes over garden greens with olive oil & oregano." },
+    { "id": "sl_3", "name": "Fruit Salad", "price": 120, "isVeg": true, "status": "available", "description": "Seasonal fresh cut fruits dressed with lemon zest and chaat masala." },
+    { "id": "sl_4", "name": "Chicken Salad", "price": 150, "isVeg": false, "status": "available", "description": "Tender grilled chicken chunks on mixed greens with herb dressing." },
+    { "id": "sl_5", "name": "Mexican Veggie Salad", "price": 150, "isVeg": true, "status": "available", "description": "Corn, beans, jalapeños, bell peppers and crunchy nachos in salsa dressing." }
+  ],
+  "noodles": [
+    { "id": "nd_1", "name": "Veg Noodles", "price": 100, "isVeg": true, "status": "available", "description": "Wok-tossed noodles with shredded cabbage, carrots and spring onions." },
+    { "id": "nd_2", "name": "Hakka Noodles", "price": 120, "isVeg": true, "status": "available", "description": "Classic Indo-Chinese dry hakka style noodles with fragrant garlic." },
+    { "id": "nd_3", "name": "Hong Kong Noodles", "price": 140, "isVeg": true, "status": "available", "description": "Spicy tossed Hong Kong style noodles with fiery oriental sauce." },
+    { "id": "nd_4", "name": "Chicken Noodles", "price": 150, "isVeg": false, "status": "available", "description": "Savory stir-fried noodles loaded with spiced chicken strips." }
+  ],
+  "veg_marine": [
+    { "id": "vm_1", "name": "Veg Marine", "price": 70, "isVeg": true, "status": "available", "description": "Special soft marine roll packed with savory vegetables." },
+    { "id": "vm_2", "name": "Corn Marine", "price": 80, "isVeg": true, "status": "available", "description": "Sweet golden corn blend filled inside toasted marine bun." },
+    { "id": "vm_3", "name": "Mushroom Marine", "price": 80, "isVeg": true, "status": "available", "description": "Spiced button mushrooms tossed with herbs in signature marine bread." },
+    { "id": "vm_4", "name": "Paneer Marine", "price": 100, "isVeg": true, "status": "available", "description": "Grilled cottage cheese loaded into warm signature marine bread." }
+  ],
+  "mojitos": [
+    { "id": "mj_1", "name": "Ocean Blue Mojito", "price": 80, "isVeg": true, "status": "available", "description": "Chilled blue curaçao blend with fresh mint and sparkling soda." },
+    { "id": "mj_2", "name": "Green Apple Mojito", "price": 80, "isVeg": true, "status": "available", "description": "Crisp green apple syrup with bruised mint leaves and lime." },
+    { "id": "mj_3", "name": "Mint Mojito", "price": 80, "isVeg": true, "status": "available", "description": "Original refreshing garden mint, tangy lemon slices and fizz." },
+    { "id": "mj_4", "name": "Blue Berry Mojito", "price": 80, "isVeg": true, "status": "available", "description": "Wild blueberry crush stirred with iced mint sparkler." }
+  ],
+  "non_veg_burgers": [
+    { "id": "nvb_1", "name": "Chicken Burger", "price": 80, "isVeg": false, "status": "available", "description": "Juicy chicken patty grilled with signature mayo on soft sesame bun." },
+    { "id": "nvb_2", "name": "Salami Chicken Burger", "price": 100, "isVeg": false, "status": "available", "description": "Grilled chicken patty topped with sliced smoked chicken salami." },
+    { "id": "nvb_3", "name": "Tandoori Burger", "price": 100, "isVeg": false, "status": "available", "description": "Chicken steak basted in smoky Punjabi tandoori spices." },
+    { "id": "nvb_4", "name": "Crispy Chicken Burger", "price": 120, "isVeg": false, "status": "available", "description": "Panko crusted golden fried chicken breast with garlic mayo." }
+  ],
+  "non_veg_sandwiches": [
+    { "id": "nvs_1", "name": "Chicken Sandwich", "price": 120, "isVeg": false, "status": "available", "description": "Shredded roast chicken blended with herb mayo inside grilled bread." },
+    { "id": "nvs_2", "name": "Salami Chicken Sandwich", "price": 120, "isVeg": false, "status": "available", "description": "Layers of savory sliced chicken salami with cheese spread." },
+    { "id": "nvs_3", "name": "Chicken Keema Sandwich", "price": 120, "isVeg": false, "status": "available", "description": "Slow cooked spiced minced chicken spread inside toasted bread." },
+    { "id": "nvs_4", "name": "BBQ Sandwich", "price": 130, "isVeg": false, "status": "available", "description": "Tender chicken tossed in sweet & smoky barbecue sauce." }
+  ],
+  "non_veg_wraps": [
+    { "id": "nvw_1", "name": "Chicken Wrap", "price": 100, "isVeg": false, "status": "available", "description": "Succulent chicken strips with salad in a soft toasted tortilla." },
+    { "id": "nvw_2", "name": "Crispy Chicken Wrap", "price": 120, "isVeg": false, "status": "available", "description": "Extra crunchy fried chicken tenders with special spicy dressing." },
+    { "id": "nvw_3", "name": "Tandoori Wrap", "price": 120, "isVeg": false, "status": "available", "description": "Char-grilled tandoori chicken chunks wrapped with pickled onions." },
+    { "id": "nvw_4", "name": "Salami Chicken Wrap", "price": 120, "isVeg": false, "status": "available", "description": "Premium chicken salami rolls dressed with cream and salad." },
+    { "id": "nvw_5", "name": "Chicken Keema Wrap", "price": 120, "isVeg": false, "status": "available", "description": "Flavorsome spiced chicken mince rolled with fresh bell peppers." }
+  ],
+  "fried_items": [
+    { "id": "fi_1", "name": "Regular Fries", "price": 60, "isVeg": true, "status": "available", "description": "Golden salted straight cut crispy potato fries." },
+    { "id": "fi_2", "name": "Masala Fries", "price": 70, "isVeg": true, "status": "available", "description": "Crisp fries dusted with aromatic Indian chatpata spices." },
+    { "id": "fi_3", "name": "Peri Peri Fries", "price": 80, "isVeg": true, "status": "available", "description": "Hot and tangy African bird's eye chili seasoning on crisp fries." },
+    { "id": "fi_4", "name": "Cheese Fries", "price": 100, "isVeg": true, "status": "available", "description": "Hot crisp fries smothered in warm velvety molten cheese sauce." }
+  ],
+  "veg_snacks": [
+    { "id": "vs_s1", "name": "Potato Shots (12 PCS)", "price": 100, "isVeg": true, "status": "available", "description": "12 bite-sized crispy spiced potato nuggets." },
+    { "id": "vs_s2", "name": "Cheese Corn Rolls (6 PCS)", "price": 120, "isVeg": true, "status": "available", "description": "6 crispy golden rolls filled with gooey mozzarella and corn." },
+    { "id": "vs_s3", "name": "Paneer Popcorn (300 GM)", "price": 200, "isVeg": true, "status": "available", "description": "300g crunchy coated cottage cheese bite-sized poppers." }
+  ],
+  "non_veg_snacks": [
+    { "id": "nvs_s1", "name": "Chicken Kabab", "price": 100, "isVeg": false, "status": "available", "description": "Minced chicken seasoned with tandoori spices and skewered to perfection." },
+    { "id": "nvs_s2", "name": "Chicken Nuggets (12 PCS)", "price": 140, "isVeg": false, "status": "available", "description": "12 golden battered tender juicy chicken nuggets." },
+    { "id": "nvs_s3", "name": "Chicken Strips", "price": 150, "isVeg": false, "status": "available", "description": "Tender chicken tenderloin strips coated in crunchy crumb." },
+    { "id": "nvs_s4", "name": "Chicken Popcorn (300 GM)", "price": 200, "isVeg": false, "status": "available", "description": "300g crunchy bite-sized seasoned chicken poppers." }
+  ],
+  "extra_dips": [
+    { "id": "ed_1", "name": "Mayo", "price": 10, "isVeg": true, "status": "available", "description": "Classic creamy smooth mayonnaise dip." },
+    { "id": "ed_2", "name": "Any Other Dip", "price": 20, "isVeg": true, "status": "available", "description": "Choice of Tandoori, Mint, Peri Peri, Chipotle or Cheese dip." }
+  ],
+  "non_veg_marine": [
+    { "id": "nvm_1", "name": "Chicken Marine", "price": 100, "isVeg": false, "status": "available", "description": "Signature toasted marine roll with seasoned juicy chicken chunks." },
+    { "id": "nvm_2", "name": "Tandoori Chicken Marine", "price": 120, "isVeg": false, "status": "available", "description": "Smoky char-grilled chicken tossed with onions in marine bun." },
+    { "id": "nvm_3", "name": "Crispy Chicken Marine", "price": 130, "isVeg": false, "status": "available", "description": "Crunchy golden fried chicken with garlic dip in marine bread." },
+    { "id": "nvm_4", "name": "Salami Chicken Marine", "price": 130, "isVeg": false, "status": "available", "description": "Sliced savory smoked chicken salami folded in warm marine bread." },
+    { "id": "nvm_5", "name": "Keema Chicken Marine", "price": 140, "isVeg": false, "status": "available", "description": "Slow cooked minced chicken masala stuffed into marine bread." }
+  ],
+  "veg_pizza": [
+    {
+      "id": "vpz_1",
+      "name": "Onion Pizza",
+      "isVeg": true,
+      "status": "available",
+      "description": "Crunchy red onions over rich tomato sauce and 100% mozzarella.",
+      "variants": [
+        { "label": "Small", "price": 100 },
+        { "label": "Medium", "price": 180 },
+        { "label": "Large", "price": 270 }
+      ]
+    },
+    {
+      "id": "vpz_2",
+      "name": "Capsicum Pizza",
+      "isVeg": true,
+      "status": "available",
+      "description": "Fresh crisp green bell peppers with herb seasoned cheese.",
+      "variants": [
+        { "label": "Small", "price": 100 },
+        { "label": "Medium", "price": 190 },
+        { "label": "Large", "price": 280 }
+      ]
+    },
+    {
+      "id": "vpz_3",
+      "name": "Mushroom Pizza",
+      "isVeg": true,
+      "status": "available",
+      "description": "Savory sliced button mushrooms on a bed of melted cheese.",
+      "variants": [
+        { "label": "Small", "price": 120 },
+        { "label": "Medium", "price": 200 },
+        { "label": "Large", "price": 300 }
+      ]
+    },
+    {
+      "id": "vpz_4",
+      "name": "Margherita Pizza",
+      "isVeg": true,
+      "status": "available",
+      "description": "Classic Italian pizza with double mozzarella cheese and basil aroma.",
+      "variants": [
+        { "label": "Small", "price": 120 },
+        { "label": "Medium", "price": 200 },
+        { "label": "Large", "price": 300 }
+      ]
+    },
+    {
+      "id": "vpz_5",
+      "name": "Corn Pizza",
+      "isVeg": true,
+      "status": "available",
+      "description": "Juicy sweet golden corn kernels spread over golden baked crust.",
+      "variants": [
+        { "label": "Small", "price": 120 },
+        { "label": "Medium", "price": 200 },
+        { "label": "Large", "price": 300 }
+      ]
+    },
+    {
+      "id": "vpz_6",
+      "name": "Paneer Pizza",
+      "isVeg": true,
+      "status": "available",
+      "description": "Marinated Indian cottage cheese cubes with aromatic spices.",
+      "variants": [
+        { "label": "Small", "price": 120 },
+        { "label": "Medium", "price": 220 },
+        { "label": "Large", "price": 320 }
+      ]
+    },
+    {
+      "id": "vpz_7",
+      "name": "Tomato Pizza",
+      "isVeg": true,
+      "status": "available",
+      "description": "Sun-ripened juicy sliced tomatoes with Italian herbs and cheese.",
+      "variants": [
+        { "label": "Small", "price": 120 },
+        { "label": "Medium", "price": 200 },
+        { "label": "Large", "price": 300 }
+      ]
+    },
+    {
+      "id": "vpz_8",
+      "name": "Veggie Delight Pizza",
+      "isVeg": true,
+      "status": "available",
+      "description": "Crisp onions, capsicum, sweet corn and ripe tomatoes.",
+      "variants": [
+        { "label": "Small", "price": 130 },
+        { "label": "Medium", "price": 200 },
+        { "label": "Large", "price": 300 }
+      ]
+    },
+    {
+      "id": "vpz_9",
+      "name": "Pineapple Pizza",
+      "isVeg": true,
+      "status": "available",
+      "description": "Sweet tangy pineapple chunks paired with melted cheese blend.",
+      "variants": [
+        { "label": "Small", "price": 130 },
+        { "label": "Medium", "price": 200 },
+        { "label": "Large", "price": 320 }
+      ]
+    },
+    {
+      "id": "vpz_10",
+      "name": "Spicy Paneer Pizza",
+      "isVeg": true,
+      "status": "available",
+      "description": "Fiery marinated paneer with jalapeños, onions and red paprika.",
+      "variants": [
+        { "label": "Small", "price": 160 },
+        { "label": "Medium", "price": 230 },
+        { "label": "Large", "price": 340 }
+      ]
+    },
+    {
+      "id": "vpz_11",
+      "name": "Pasta Pizza",
+      "isVeg": true,
+      "status": "available",
+      "description": "Creamy penne pasta baked directly atop a cheesy pizza crust.",
+      "variants": [
+        { "label": "Small", "price": 160 },
+        { "label": "Medium", "price": 250 },
+        { "label": "Large", "price": 350 }
+      ]
+    },
+    {
+      "id": "vpz_12",
+      "name": "Continental Pizza",
+      "isVeg": true,
+      "status": "available",
+      "description": "European style medley of mushrooms, sweet corn, black olives & herbs.",
+      "variants": [
+        { "label": "Small", "price": 170 },
+        { "label": "Medium", "price": 250 },
+        { "label": "Large", "price": 350 }
+      ]
+    },
+    {
+      "id": "vpz_13",
+      "name": "Mazedaar Makhani Paneer Pizza",
+      "isVeg": true,
+      "status": "available",
+      "description": "Rich Punjabi makhani sauce base crowned with tender paneer tikka.",
+      "variants": [
+        { "label": "Small", "price": 170 },
+        { "label": "Medium", "price": 250 },
+        { "label": "Large", "price": 350 }
+      ]
+    },
+    {
+      "id": "vpz_14",
+      "name": "Classic Veggie Pizza",
+      "isVeg": true,
+      "status": "available",
+      "description": "Loaded with onions, capsicum, mushrooms, corn and black olives.",
+      "variants": [
+        { "label": "Small", "price": 200 },
+        { "label": "Medium", "price": 300 },
+        { "label": "Large", "price": 400 }
+      ]
+    },
+    {
+      "id": "vpz_15",
+      "name": "Veg Supreme Pizza",
+      "isVeg": true,
+      "status": "available",
+      "description": "Supreme mix of exotic veggies, paneer chunks and extra mozzarella.",
+      "variants": [
+        { "label": "Small", "price": 220 },
+        { "label": "Medium", "price": 320 },
+        { "label": "Large", "price": 420 }
+      ]
+    },
+    {
+      "id": "vpz_16",
+      "name": "Double Deezz Special Pizza",
+      "isVeg": true,
+      "status": "available",
+      "description": "Signature chef special loaded with premium paneer, mushrooms, corn & quadruple cheese.",
+      "variants": [
+        { "label": "Small", "price": 240 },
+        { "label": "Medium", "price": 350 },
+        { "label": "Large", "price": 450 }
+      ]
+    }
+  ],
+  "non_veg_pizza": [
+    {
+      "id": "nvpz_1",
+      "name": "Chicken Pizza",
+      "isVeg": false,
+      "status": "available",
+      "description": "Seasoned juicy diced chicken chunks over rich tomato sauce & cheese.",
+      "variants": [
+        { "label": "Small", "price": 170 },
+        { "label": "Medium", "price": 250 },
+        { "label": "Large", "price": 360 }
+      ]
+    },
+    {
+      "id": "nvpz_2",
+      "name": "BBQ Chicken Pizza",
+      "isVeg": false,
+      "status": "available",
+      "description": "Smoky barbecue marinated chicken, sliced onions and mozzarella.",
+      "variants": [
+        { "label": "Small", "price": 180 },
+        { "label": "Medium", "price": 260 },
+        { "label": "Large", "price": 380 }
+      ]
+    },
+    {
+      "id": "nvpz_3",
+      "name": "Chicken Burst Pizza",
+      "isVeg": false,
+      "status": "available",
+      "description": "Double loaded chicken with burst cheese center and spicy herbs.",
+      "variants": [
+        { "label": "Small", "price": 180 },
+        { "label": "Medium", "price": 260 },
+        { "label": "Large", "price": 400 }
+      ]
+    },
+    {
+      "id": "nvpz_4",
+      "name": "Chicken Sausage Pizza",
+      "isVeg": false,
+      "status": "available",
+      "description": "Sliced herb-infused chicken sausages with sweet bell peppers.",
+      "variants": [
+        { "label": "Small", "price": 200 },
+        { "label": "Medium", "price": 260 },
+        { "label": "Large", "price": 380 }
+      ]
+    },
+    {
+      "id": "nvpz_5",
+      "name": "Spicy Chicken Pizza",
+      "isVeg": false,
+      "status": "available",
+      "description": "Hot & spicy chicken strips with jalapeños, onions and peri peri flakes.",
+      "variants": [
+        { "label": "Small", "price": 200 },
+        { "label": "Medium", "price": 280 },
+        { "label": "Large", "price": 400 }
+      ]
+    }
+  ],
+  "rice_bowls": [
+    { "id": "rb_1", "name": "Veg Rice Bowl", "price": 100, "isVeg": true, "status": "available", "description": "Fragrant steamed rice paired with stir-fried garden veggies & rich gravy." },
+    { "id": "rb_2", "name": "Paneer Rice Bowl", "price": 120, "isVeg": true, "status": "available", "description": "Golden paneer cubes tossed in savory sauce served over aromatic basmati." },
+    { "id": "rb_3", "name": "Chicken Rice Bowl", "price": 150, "isVeg": false, "status": "available", "description": "Succulent spiced chicken gravy served atop fluffy basmati rice." }
+  ],
+  "veg_pasta": [
+    { "id": "vp_1", "name": "Red Sauce Pasta", "price": 100, "isVeg": true, "status": "available", "description": "Penne tossed in tangy Italian arrabbiata tomato basil sauce." },
+    { "id": "vp_2", "name": "White Sauce Pasta", "price": 100, "isVeg": true, "status": "available", "description": "Creamy rich Alfredo sauce with garlic, herbs and sweet corn." },
+    { "id": "vp_3", "name": "Mix Sauce Pasta", "price": 120, "isVeg": true, "status": "available", "description": "Chef's pink sauce harmony of tomato arrabbiata and velvety cream." },
+    { "id": "vp_4", "name": "Creamy Pasta", "price": 150, "isVeg": true, "status": "available", "description": "Extra rich double cream pasta loaded with cheese and sautéed veggies." }
+  ],
+  "non_veg_pasta": [
+    { "id": "nvp_1", "name": "Red Sauce Chicken Pasta", "price": 120, "isVeg": false, "status": "available", "description": "Penne and chicken tossed in spicy garlic tomato arrabbiata." },
+    { "id": "nvp_2", "name": "White Sauce Chicken Pasta", "price": 120, "isVeg": false, "status": "available", "description": "Juicy chicken pieces tossed in creamy Parmesan garlic white sauce." },
+    { "id": "nvp_3", "name": "Mix Sauce Non-Veg Pasta", "price": 140, "isVeg": false, "status": "available", "description": "Pink pasta blend with shredded chicken chunks and cheese." }
+  ],
+  "garlic_bread": [
+    { "id": "gb_1", "name": "Plain Garlic Bread", "price": 120, "isVeg": true, "status": "available", "description": "Toasted baguette slices infused with fragrant roasted garlic butter." },
+    { "id": "gb_2", "name": "Hot Veg Garlic Bread", "price": 120, "isVeg": true, "status": "available", "description": "Garlic bread topped with spiced jalapeños, onions and herbs." },
+    { "id": "gb_3", "name": "Stuffed Garlic Bread", "price": 130, "isVeg": true, "status": "available", "description": "Oven baked bread stuffed with melted mozzarella, corn and jalapeños." },
+    { "id": "gb_4", "name": "Chicken Garlic Bread", "price": 150, "isVeg": false, "status": "available", "description": "Loaded with seasoned diced chicken and bubbling molten cheese." }
+  ],
+  "cheese_chilli": [
+    { "id": "cc_1", "name": "Dry Cheese Chilli", "price": 200, "isVeg": true, "status": "available", "description": "Crisp fried paneer cubes wok tossed with capsicum, onions & green chilies." },
+    { "id": "cc_2", "name": "Gravy Cheese Chilli", "price": 220, "isVeg": true, "status": "available", "description": "Tender paneer batons simmered in savory Chinese chili garlic gravy." },
+    { "id": "cc_3", "name": "Chicken Chilli", "price": 250, "isVeg": false, "status": "available", "description": "Crispy chicken bites stir fried with hot peppers, onions & oriental sauces." }
+  ]
+};
+
+const targetPath = path.join(__dirname, 'menu.json');
+fs.writeFileSync(targetPath, JSON.stringify(menuData, null, 2), 'utf8');
+console.log('Successfully generated menu.json with all Double Deezz categories and items!');
