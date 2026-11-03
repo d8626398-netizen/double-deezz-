@@ -11,7 +11,9 @@
           "menu.json",
           "orders.json",
           "firebase-config.js",
+          "logo.png",
           "logo.jpg",
+          "logo-icon.png",
           "instagram-qr.jpg",
           "menu-qr.jpg"
         ]

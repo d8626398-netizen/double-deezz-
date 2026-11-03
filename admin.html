@@ -5,6 +5,7 @@
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
   <meta name="theme-color" content="#861B40">
   <title>Admin Portal | Double Deezz The Food Cafe</title>
+  <link rel="icon" type="image/png" href="./logo-icon.png">
 
   <!-- Google Fonts & Material Symbols -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -117,13 +118,23 @@
   <!-- ADMIN AUTH GUARD MODAL (Shown if not logged in) -->
   <div id="loginModal" class="fixed inset-0 z-50 flex items-center justify-center modal-backdrop p-4">
     <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-dark-border text-center">
-      <div class="w-14 h-14 mx-auto rounded-full bg-burgundy/10 text-burgundy flex items-center justify-center mb-3">
-        <span class="material-symbols-outlined text-3xl">shield_person</span>
+      <div class="mb-3 flex justify-center">
+        <img src="./logo.png" alt="Double Deezz The Food Cafe" class="h-14 w-auto object-contain">
       </div>
-      <h2 class="font-title font-bold text-xl text-burgundy">Double Deezz Admin</h2>
-      <p class="text-xs text-dark-muted mt-1 mb-5">Enter security passcode to manage restaurant menu, prices &amp; orders.</p>
+      <p class="text-xs text-dark-muted mt-1 mb-4">Sign in to manage restaurant menu, prices, WhatsApp settings &amp; live orders.</p>
+
+      <!-- Auth Method Selector -->
+      <div class="flex rounded-xl bg-cream p-1 mb-4 border border-dark-border text-xs font-semibold">
+        <button type="button" onclick="switchLoginMode('pin')" id="loginModePinBtn" class="flex-1 py-1.5 rounded-lg bg-burgundy text-white shadow-xs">
+          Passcode Mode
+        </button>
+        <button type="button" onclick="switchLoginMode('firebase')" id="loginModeFbBtn" class="flex-1 py-1.5 rounded-lg text-dark hover:bg-white/50">
+          Firebase Auth
+        </button>
+      </div>
       
-      <form onsubmit="handleAdminLogin(event)" class="space-y-3">
+      <!-- 1. Passcode Form -->
+      <form id="pinLoginForm" onsubmit="handleAdminLogin(event)" class="space-y-3">
         <div>
           <input id="adminPinInput" type="password" placeholder="Passcode (Default: 1818)" class="w-full text-center text-lg tracking-widest p-2.5 rounded-xl border border-dark-border focus:ring-2 focus:ring-burgundy focus:outline-none" required>
         </div>
@@ -131,6 +142,22 @@
           Access Admin Dashboard
         </button>
       </form>
+
+      <!-- 2. Firebase Auth Email / Password Form -->
+      <form id="fbLoginForm" onsubmit="handleFirebaseAdminLogin(event)" class="space-y-3 hidden text-left">
+        <div>
+          <label class="block text-[11px] font-bold text-dark mb-1">Admin Email</label>
+          <input id="fbAdminEmail" type="email" placeholder="admin@doubledeezz.com" class="w-full p-2.5 text-xs rounded-xl border border-dark-border focus:ring-1 focus:ring-burgundy focus:outline-none" required>
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-dark mb-1">Password</label>
+          <input id="fbAdminPassword" type="password" placeholder="••••••••" class="w-full p-2.5 text-xs rounded-xl border border-dark-border focus:ring-1 focus:ring-burgundy focus:outline-none" required>
+        </div>
+        <button type="submit" class="w-full py-2.5 rounded-xl bg-burgundy hover:bg-burgundy-light text-white font-bold text-sm shadow transition-all active:scale-95 text-center">
+          Sign In with Firebase
+        </button>
+      </form>
+
       <div class="mt-4 pt-3 border-t border-dark-border text-[11px] text-dark-muted">
         <a href="./" class="text-burgundy hover:underline flex items-center justify-center gap-1">
           <span class="material-symbols-outlined text-[14px]">arrow_back</span>
@@ -148,15 +175,15 @@
       <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
         
         <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-full overflow-hidden border border-white/50 bg-cream shrink-0">
-            <img src="./logo.jpg" alt="Logo" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=120&q=80'">
-          </div>
-          <div>
+          <a href="./" class="flex items-center gap-2">
+            <img src="./logo.png" alt="Double Deezz The Food Cafe" class="h-9 sm:h-10 w-auto max-w-[170px] sm:max-w-[210px] object-contain">
+          </a>
+          <div class="hidden sm:block border-l border-white/20 pl-3">
             <div class="flex items-center gap-2">
-              <h1 class="font-title font-bold text-base md:text-lg text-cream leading-tight">DOUBLE DEEZZ ADMIN</h1>
+              <span class="font-bold text-xs uppercase tracking-wider text-cream">Admin Portal</span>
               <span id="firebaseStatusBadge" class="text-[10px] bg-white/20 text-cream px-2 py-0.5 rounded-full font-medium">Checking Firebase...</span>
             </div>
-            <p class="text-[10px] text-cream/70 font-medium">Live Ordering &amp; Menu Management Portal</p>
+            <p class="text-[10px] text-cream/70 font-medium">Live Ordering &amp; Menu Management</p>
           </div>
         </div>
 
@@ -485,44 +512,74 @@
         <div class="bg-white p-5 rounded-2xl border border-dark-border shadow-xs space-y-4">
           <div class="flex items-center justify-between">
             <div>
-              <h3 class="font-title font-bold text-base text-dark">Firebase Cloud Integration</h3>
-              <p class="text-xs text-dark-muted">Connect your Firebase project for real-time Firestore database synchronization.</p>
+              <h3 class="font-title font-bold text-base text-dark flex items-center gap-2">
+                <span>🔥 Firebase Cloud Integration</span>
+                <span id="firebaseHeaderPill" class="text-[11px] bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded-full hidden">Live Connected</span>
+              </h3>
+              <p class="text-xs text-dark-muted">Connect your Firebase project for real-time Cloud Firestore database synchronization.</p>
             </div>
             <span id="firebaseCardStatus" class="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">
               Not Connected
             </span>
           </div>
 
+          <!-- Quick Auto-Fill Snippet Paste Area -->
+          <div class="p-3 bg-cream rounded-xl border border-dark-border space-y-2">
+            <label class="block text-xs font-bold text-burgundy">⚡ Quick Paste: Paste Firebase Config Object or Script</label>
+            <div class="flex flex-col sm:flex-row gap-2">
+              <textarea id="fbPasteSnippet" rows="2" placeholder='Paste your firebaseConfig snippet from Firebase Console here, e.g.:&#10;const firebaseConfig = { apiKey: "...", projectId: "..." };' class="w-full p-2 text-xs rounded-lg border border-dark-border font-mono"></textarea>
+              <button type="button" onclick="autoParseFirebaseSnippet()" class="px-4 py-2 bg-burgundy hover:bg-burgundy-light text-white font-bold text-xs rounded-xl shrink-0 flex items-center justify-center gap-1">
+                <span class="material-symbols-outlined text-[16px]">auto_fix_high</span>
+                <span>Auto Fill</span>
+              </button>
+            </div>
+          </div>
+
           <form onsubmit="handleSaveFirebaseConfig(event)" class="space-y-3 max-w-2xl">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label class="block text-[11px] font-bold text-dark mb-1">API Key (apiKey)</label>
-                <input id="fbApiKey" type="text" class="w-full p-2 text-xs rounded-lg border border-dark-border">
+                <label class="block text-[11px] font-bold text-dark mb-1">API Key (apiKey) *</label>
+                <input id="fbApiKey" type="text" placeholder="AIzaSy..." class="w-full p-2 text-xs rounded-lg border border-dark-border font-mono" required>
               </div>
               <div>
-                <label class="block text-[11px] font-bold text-dark mb-1">Project ID (projectId)</label>
-                <input id="fbProjectId" type="text" class="w-full p-2 text-xs rounded-lg border border-dark-border">
+                <label class="block text-[11px] font-bold text-dark mb-1">Project ID (projectId) *</label>
+                <input id="fbProjectId" type="text" placeholder="double-deezz-cafe" class="w-full p-2 text-xs rounded-lg border border-dark-border font-mono" required>
               </div>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label class="block text-[11px] font-bold text-dark mb-1">Auth Domain (authDomain)</label>
-                <input id="fbAuthDomain" type="text" class="w-full p-2 text-xs rounded-lg border border-dark-border">
+                <input id="fbAuthDomain" type="text" placeholder="project.firebaseapp.com" class="w-full p-2 text-xs rounded-lg border border-dark-border font-mono">
               </div>
               <div>
                 <label class="block text-[11px] font-bold text-dark mb-1">Storage Bucket (storageBucket)</label>
-                <input id="fbStorageBucket" type="text" class="w-full p-2 text-xs rounded-lg border border-dark-border">
+                <input id="fbStorageBucket" type="text" placeholder="project.appspot.com" class="w-full p-2 text-xs rounded-lg border border-dark-border font-mono">
               </div>
             </div>
 
-            <div class="flex items-center gap-3 pt-2">
-              <button type="submit" class="px-5 py-2 rounded-xl bg-dark hover:bg-black text-white font-bold text-xs transition-all">
-                Save &amp; Connect Firebase
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[11px] font-bold text-dark mb-1">Messaging Sender ID</label>
+                <input id="fbMessagingSenderId" type="text" placeholder="123456789012" class="w-full p-2 text-xs rounded-lg border border-dark-border font-mono">
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-dark mb-1">App ID (appId)</label>
+                <input id="fbAppId" type="text" placeholder="1:123456789012:web:abcdef..." class="w-full p-2 text-xs rounded-lg border border-dark-border font-mono">
+              </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-3 pt-2">
+              <button type="submit" class="px-5 py-2.5 rounded-xl bg-dark hover:bg-black text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-xs">
+                <span class="material-symbols-outlined text-[16px]">link</span>
+                <span>Save &amp; Connect Firebase</span>
               </button>
-              <button type="button" onclick="seedFirestoreWithLocalMenu()" class="px-4 py-2 rounded-xl bg-green-fresh hover:bg-green-dark text-white font-bold text-xs flex items-center gap-1.5 transition-all">
+              <button type="button" onclick="seedFirestoreWithLocalMenu()" class="px-5 py-2.5 rounded-xl bg-green-fresh hover:bg-green-dark text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-xs">
                 <span class="material-symbols-outlined text-[16px]">cloud_upload</span>
-                <span>Seed Firestore with Current Menu</span>
+                <span>Seed Firestore with 22 Menu Categories</span>
+              </button>
+              <button type="button" onclick="disconnectFirebaseConfig()" class="px-3 py-2 rounded-xl text-xs font-bold text-red-600 hover:bg-red-50 transition-all">
+                Disconnect
               </button>
             </div>
           </form>
@@ -781,6 +838,91 @@
         if (document.getElementById('fbProjectId')) document.getElementById('fbProjectId').value = cfg.projectId || '';
         if (document.getElementById('fbAuthDomain')) document.getElementById('fbAuthDomain').value = cfg.authDomain || '';
         if (document.getElementById('fbStorageBucket')) document.getElementById('fbStorageBucket').value = cfg.storageBucket || '';
+        if (document.getElementById('fbMessagingSenderId')) document.getElementById('fbMessagingSenderId').value = cfg.messagingSenderId || '';
+        if (document.getElementById('fbAppId')) document.getElementById('fbAppId').value = cfg.appId || '';
+      }
+    }
+
+    function switchLoginMode(mode) {
+      const pinBtn = document.getElementById('loginModePinBtn');
+      const fbBtn = document.getElementById('loginModeFbBtn');
+      const pinForm = document.getElementById('pinLoginForm');
+      const fbForm = document.getElementById('fbLoginForm');
+
+      if (mode === 'pin') {
+        pinBtn.className = 'flex-1 py-1.5 rounded-lg bg-burgundy text-white shadow-xs';
+        fbBtn.className = 'flex-1 py-1.5 rounded-lg text-dark hover:bg-white/50';
+        pinForm.classList.remove('hidden');
+        fbForm.classList.add('hidden');
+      } else {
+        fbBtn.className = 'flex-1 py-1.5 rounded-lg bg-burgundy text-white shadow-xs';
+        pinBtn.className = 'flex-1 py-1.5 rounded-lg text-dark hover:bg-white/50';
+        fbForm.classList.remove('hidden');
+        pinForm.classList.add('hidden');
+      }
+    }
+
+    async function handleFirebaseAdminLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('fbAdminEmail').value.trim();
+      const password = document.getElementById('fbAdminPassword').value;
+
+      if (!window.DoubleDeezzFirebase || !window.DoubleDeezzFirebase.isConfigured()) {
+        alert('Firebase credentials have not been configured yet. Please log in using Passcode mode (1818), then connect Firebase under Restaurant Settings.');
+        switchLoginMode('pin');
+        return;
+      }
+
+      try {
+        await window.DoubleDeezzFirebase.signInWithEmail(email, password);
+        sessionStorage.setItem('doubledeezz_admin_auth', 'true');
+        checkAuth();
+      } catch (err) {
+        alert('Firebase Login Error: ' + err.message);
+      }
+    }
+
+    function autoParseFirebaseSnippet() {
+      const snippet = (document.getElementById('fbPasteSnippet')?.value || '').trim();
+      if (!snippet) {
+        alert('Please paste your Firebase config snippet or JSON first.');
+        return;
+      }
+
+      const extract = (key) => {
+        const regex = new RegExp(`['"]?${key}['"]?\\s*:\\s*['"]([^'"]+)['"]`, 'i');
+        const match = snippet.match(regex);
+        return match ? match[1] : '';
+      };
+
+      const apiKey = extract('apiKey');
+      const projectId = extract('projectId');
+      const authDomain = extract('authDomain');
+      const storageBucket = extract('storageBucket');
+      const messagingSenderId = extract('messagingSenderId');
+      const appId = extract('appId');
+
+      if (apiKey) document.getElementById('fbApiKey').value = apiKey;
+      if (projectId) document.getElementById('fbProjectId').value = projectId;
+      if (authDomain) document.getElementById('fbAuthDomain').value = authDomain;
+      if (storageBucket) document.getElementById('fbStorageBucket').value = storageBucket;
+      if (messagingSenderId) document.getElementById('fbMessagingSenderId').value = messagingSenderId;
+      if (appId) document.getElementById('fbAppId').value = appId;
+
+      if (apiKey || projectId) {
+        alert('✅ Firebase configuration fields extracted and populated successfully! Click "Save & Connect Firebase" to activate.');
+      } else {
+        alert('Could not automatically parse the snippet. Please fill in the API Key and Project ID fields manually.');
+      }
+    }
+
+    function disconnectFirebaseConfig() {
+      if (confirm('Disconnect Firebase from this browser? The app will revert to local server mode.')) {
+        if (window.DoubleDeezzFirebase) {
+          window.DoubleDeezzFirebase.removeConfig();
+        }
+        updateFirebaseStatusUI();
+        alert('Firebase disconnected. Operating in local server mode.');
       }
     }
 
@@ -1301,7 +1443,9 @@
         apiKey: document.getElementById('fbApiKey').value.trim(),
         projectId: document.getElementById('fbProjectId').value.trim(),
         authDomain: document.getElementById('fbAuthDomain').value.trim(),
-        storageBucket: document.getElementById('fbStorageBucket').value.trim()
+        storageBucket: document.getElementById('fbStorageBucket').value.trim(),
+        messagingSenderId: document.getElementById('fbMessagingSenderId').value.trim(),
+        appId: document.getElementById('fbAppId').value.trim()
       };
 
       if (!cfg.apiKey || !cfg.projectId) {
